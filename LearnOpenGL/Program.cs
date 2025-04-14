@@ -10,7 +10,6 @@ public static class Program
     static IWindow window;
     private static IInputContext input;
     private static GL gl;
-
     public static void Main()
     {
         InitializeWindow();
@@ -27,6 +26,9 @@ public static class Program
         window.Load += OnWindowLoad;
         window.Update += OnWindowUpdate;
         window.Render += OnWindowRender;
+
+
+
         window.Run();
     }
 
@@ -87,7 +89,7 @@ public static class Program
     {
         
     }
-
+    
     private static void OnWindowRender(double obj)
     {
         gl.ClearColor(0.2f,0.3f,0.3f,1.0f);
