@@ -30,15 +30,15 @@ public static class Program
         window.Run();
     }
 
-    private static void OnWindowRender(double obj)
+    private static unsafe void OnWindowRender(double obj)
     {
         gl.ClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         gl.Clear(ClearBufferMask.ColorBufferBit);
 
         gl.UseProgram(shaderProgram);
         gl.BindVertexArray(VAO);
-        gl.PolygonMode(TriangleFace.FrontAndBack, PolygonMode.Line);
-        gl.DrawElements(PrimitiveType.TriangleStrip, 6, DrawElementsType.UnsignedInt, 0);
+        //gl.PolygonMode(TriangleFace.FrontAndBack, PolygonMode.Line);
+        gl.DrawElements(PrimitiveType.TriangleStrip, 6, DrawElementsType.UnsignedInt, null);
     }
 
     private static void OnWindowLoad()
@@ -133,7 +133,7 @@ public static class Program
             -0.5f,  0.5f, 0.0f   // top left 
         };
         int[] indicies ={  // note that we start from 0!
-            0, 1, 2,   // first triangle
+            0, 1, 3,   // first triangle
             1, 2, 3    // second triangle
         };
         VBO = gl.GenBuffer();
