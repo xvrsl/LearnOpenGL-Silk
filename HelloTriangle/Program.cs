@@ -14,7 +14,6 @@ public static class Program
     public static void Main()
     {
         InitializeWindow();
-        Console.Write("The end");
     }
 
     static void InitializeWindow()
@@ -38,7 +37,8 @@ public static class Program
 
         gl.UseProgram(shaderProgram);
         gl.BindVertexArray(VAO);
-        gl.DrawArrays(PrimitiveType.Triangles,0,3);
+        gl.PolygonMode(TriangleFace.FrontAndBack, PolygonMode.Line);
+        gl.DrawElements(PrimitiveType.TriangleStrip, 6, DrawElementsType.UnsignedInt, 0);
     }
 
     private static void OnWindowLoad()
@@ -100,12 +100,9 @@ public static class Program
     {
     }
 
-    static readonly float[] verticies ={
-        -0.5f,-0.5f,0.0f,
-        0.5f,-0.5f,0.0f,
-        0.0f,0.5f,0.0f
-    };
-    static uint VBO,VAO;
+
+
+    static uint VBO, VAO, EBO;
     const string vertShaderSource =
     @"
         #version 330 core
@@ -129,14 +126,31 @@ public static class Program
 
     private static void PrepareRenderingTriangle()
     {
+        float[] verticies ={
+            0.5f,  0.5f, 0.0f,  // top right
+            0.5f, -0.5f, 0.0f,  // bottom right
+            -0.5f, -0.5f, 0.0f,  // bottom left
+            -0.5f,  0.5f, 0.0f   // top left 
+        };
+        int[] indicies ={  // note that we start from 0!
+            0, 1, 2,   // first triangle
+            1, 2, 3    // second triangle
+        };
         VBO = gl.GenBuffer();
         VAO = gl.GenVertexArrays(1);
+        EBO = gl.GenBuffers(1);
 
         gl.BindVertexArray(VAO);
+
         gl.BindBuffer(BufferTargetARB.ArrayBuffer, VBO);
-        gl.BufferData(BufferTargetARB.ArrayBuffer,(ReadOnlySpan<float>)verticies.AsSpan(), BufferUsageARB.StaticDraw);
+        gl.BufferData<float>(BufferTargetARB.ArrayBuffer, verticies, BufferUsageARB.StaticDraw);
+        gl.BindBuffer(BufferTargetARB.ElementArrayBuffer, EBO);
+        gl.BufferData<int>(BufferTargetARB.ElementArrayBuffer, indicies, BufferUsageARB.StaticDraw);
         gl.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 3 * sizeof(float), 0);
         gl.EnableVertexAttribArray(0);
+
+        gl.BindBuffer(BufferTargetARB.ArrayBuffer, 0);
+        gl.BindVertexArray(0);
 
         uint vertShader, fragShader;
         vertShader = CreateShader(GLEnum.VertexShader, vertShaderSource);
