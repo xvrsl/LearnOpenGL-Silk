@@ -13,6 +13,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "GettingStarted", "GettingSt
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shaders", "GettingStarted\Shaders\Shaders.csproj", "{0F14D8B3-33FD-4BAB-9D7B-5753F04D4041}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Common", "Common", "{79DA8559-31E0-4930-8895-2A3AFC813A70}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shader", "Common\Shader\Shader.csproj", "{CFA26A75-9276-4354-A3AC-BD7DCF73C97D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -71,11 +75,24 @@ Global
 		{0F14D8B3-33FD-4BAB-9D7B-5753F04D4041}.Release|x64.Build.0 = Release|Any CPU
 		{0F14D8B3-33FD-4BAB-9D7B-5753F04D4041}.Release|x86.ActiveCfg = Release|Any CPU
 		{0F14D8B3-33FD-4BAB-9D7B-5753F04D4041}.Release|x86.Build.0 = Release|Any CPU
+		{CFA26A75-9276-4354-A3AC-BD7DCF73C97D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CFA26A75-9276-4354-A3AC-BD7DCF73C97D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CFA26A75-9276-4354-A3AC-BD7DCF73C97D}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{CFA26A75-9276-4354-A3AC-BD7DCF73C97D}.Debug|x64.Build.0 = Debug|Any CPU
+		{CFA26A75-9276-4354-A3AC-BD7DCF73C97D}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{CFA26A75-9276-4354-A3AC-BD7DCF73C97D}.Debug|x86.Build.0 = Debug|Any CPU
+		{CFA26A75-9276-4354-A3AC-BD7DCF73C97D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CFA26A75-9276-4354-A3AC-BD7DCF73C97D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CFA26A75-9276-4354-A3AC-BD7DCF73C97D}.Release|x64.ActiveCfg = Release|Any CPU
+		{CFA26A75-9276-4354-A3AC-BD7DCF73C97D}.Release|x64.Build.0 = Release|Any CPU
+		{CFA26A75-9276-4354-A3AC-BD7DCF73C97D}.Release|x86.ActiveCfg = Release|Any CPU
+		{CFA26A75-9276-4354-A3AC-BD7DCF73C97D}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{0F14D8B3-33FD-4BAB-9D7B-5753F04D4041} = {53F98431-B0D3-8B79-87E0-9BCA30189937}
+		{CFA26A75-9276-4354-A3AC-BD7DCF73C97D} = {79DA8559-31E0-4930-8895-2A3AFC813A70}
 	EndGlobalSection
 EndGlobal
