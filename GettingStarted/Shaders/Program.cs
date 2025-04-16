@@ -4,13 +4,8 @@ using Silk.NET.Input;
 using Silk.NET.Maths;
 using Silk.NET.OpenGL;
 using Silk.NET.Windowing;
-namespace Shaders
-{
-    public class Test
-    {
+using Common;
 
-    }
-}
 public static class Program
 {
     static uint DefaultWindowWidth => 800;
@@ -46,7 +41,8 @@ public static class Program
         gl.ClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         gl.Clear(ClearBufferMask.ColorBufferBit);
 
-        gl.UseProgram(shaderProgram);
+        shaderProgram.Use();
+        shaderProgram.SetVector2("offset",new System.Numerics.Vector2(0.5f,0.5f));
         gl.BindVertexArray(VAO);
         //gl.PolygonMode(TriangleFace.FrontAndBack, PolygonMode.Line);
         gl.DrawElements(PrimitiveType.TriangleStrip, 3, DrawElementsType.UnsignedInt, null);
@@ -114,32 +110,7 @@ public static class Program
 
 
     static uint VBO, VAO, EBO;
-    const string vertShaderSource =
-    @"
-        #version 330 core
-        layout (location = 0) in vec3 aPos;
-        layout (location = 1) in vec3 aColor;
-
-        out vec3 ourColor;
-        void main()
-        {
-            gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);
-            ourColor = aColor;
-
-        }
-    ";
-    const string fragShaderSource =
-    @"
-        #version 330 core
-        out vec4 FragColor;
-        in vec3 ourColor;
-
-        void main()
-        {
-            FragColor = vec4(ourColor,1.0);
-        } 
-    ";
-    static uint shaderProgram;
+    static Common.Shader shaderProgram;
 
     private static void PrepareRenderingTriangle()
     {
@@ -171,30 +142,10 @@ public static class Program
         gl.BindBuffer(BufferTargetARB.ArrayBuffer, 0);
         gl.BindVertexArray(0);
 
-        uint vertShader, fragShader;
-        vertShader = CreateShader(GLEnum.VertexShader, vertShaderSource);
-        fragShader = CreateShader(GLEnum.FragmentShader, fragShaderSource);
 
-        shaderProgram = gl.CreateProgram();
-        gl.AttachShader(shaderProgram, vertShader);
-        gl.AttachShader(shaderProgram, fragShader);
-        gl.LinkProgram(shaderProgram);
 
-        gl.GetProgram(shaderProgram, GLEnum.LinkStatus, out int result);
-        if (result != 1)
-        {
-            var log = gl.GetProgramInfoLog(shaderProgram);
-            Console.WriteLine($"Shader Link Error:\n {log}");
-        }
-        else
-        {
-            Console.WriteLine("Link succeed!");
-        }
-
-        //gl.UseProgram(shaderProgram);
-        gl.DeleteShader(vertShader);
-        gl.DeleteShader(fragShader);
-
+        shaderProgram = new Common.Shader(gl, "shader.vs", "shader.fs");
+        
     }
 
     static uint CreateShader(GLEnum shaderType, string shaderSource)
