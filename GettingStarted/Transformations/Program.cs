@@ -6,6 +6,7 @@ using Silk.NET.OpenGL;
 using Silk.NET.Windowing;
 using Common;
 using StbImageSharp;
+using System.Numerics;
 public static class Program
 {
     static uint DefaultWindowWidth => 800;
@@ -13,13 +14,10 @@ public static class Program
     static IWindow window;
     private static IInputContext input;
     private static GL gl;
+
+    static Matrix4X4<float> trans;
     public static void Main()
     {
-        Vector4D<float> vec = new Vector4D<float>(1, 0, 0, 1);
-        Matrix4X4<float> trans = Matrix4X4.CreateTranslation<float>(1, 1, 0);
-        vec = Vector4D.Transform(vec,trans);
-        Console.WriteLine($"{vec.X} {vec.Y} {vec.Z}");
-
 
         InitializeWindow();
     }
@@ -51,13 +49,44 @@ public static class Program
         gl.Uniform1(gl.GetUniformLocation(shaderProgram.ID, "texture0"), 0);
         gl.Uniform1(gl.GetUniformLocation(shaderProgram.ID, "texture1"), 1);
         gl.Uniform1(gl.GetUniformLocation(shaderProgram.ID, "texture1Visibility"), smileVisibility);
-
         gl.ActiveTexture(TextureUnit.Texture0);
         gl.BindTexture(GLEnum.Texture2D, texture0);
         gl.ActiveTexture(TextureUnit.Texture1);
         gl.BindTexture(GLEnum.Texture2D, texture1);
 
         gl.BindVertexArray(VAO);
+
+        trans =
+                Matrix4X4<float>.Identity
+                * Matrix4X4.CreateScale<float>(0.5f, 0.5f, 0.5f)
+                * Matrix4X4.CreateFromAxisAngle<float>(new Vector3D<float>(0f, 0f, 1f), (float)time.TotalSeconds)
+                * Matrix4X4.CreateTranslation<float>(0.5f, -0.5f, 0.0f)
+                ;
+        float[] transList = new float[]
+        {
+                trans[0,0],trans[0,1],trans[0,2],trans[0,3],
+                trans[1,0],trans[1,1],trans[1,2],trans[1,3],
+                trans[2,0],trans[2,1],trans[2,2],trans[2,3],
+                trans[3,0],trans[3,1],trans[3,2],trans[3,3],
+        };
+        gl.UniformMatrix4(gl.GetUniformLocation(shaderProgram.ID, "transform"), false,
+        (ReadOnlySpan<float>)transList);
+        gl.DrawElements(PrimitiveType.TriangleStrip, 6, DrawElementsType.UnsignedInt, null);
+
+        trans =
+                Matrix4X4<float>.Identity
+                * Matrix4X4.CreateScale<float>((float)Math.Sin(time.TotalSeconds))
+                * Matrix4X4.CreateTranslation<float>(-0.5f, 0.5f, 0.0f)
+                ;
+        transList = new float[]
+        {
+                trans[0,0],trans[0,1],trans[0,2],trans[0,3],
+                trans[1,0],trans[1,1],trans[1,2],trans[1,3],
+                trans[2,0],trans[2,1],trans[2,2],trans[2,3],
+                trans[3,0],trans[3,1],trans[3,2],trans[3,3],
+        };
+        gl.UniformMatrix4(gl.GetUniformLocation(shaderProgram.ID, "transform"), false,
+        (ReadOnlySpan<float>)transList);
         gl.DrawElements(PrimitiveType.TriangleStrip, 6, DrawElementsType.UnsignedInt, null);
     }
 

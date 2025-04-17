@@ -11,7 +11,7 @@ uniform float texture1Visibility;
 void main()
 {
     //FragColor = texture(texture0, TexCoord) ;
-    vec2 tex1Coord = vec2(1-TexCoord.x,TexCoord.y);
+    vec2 tex1Coord = vec2(TexCoord.x,TexCoord.y);
     //vec2 tex1Coord = TexCoord;
     //FragColor = mix(texture(texture0, TexCoord), texture(texture1, tex1Coord), texture1Visibility)*ourColor;
     FragColor = mix(texture(texture0, TexCoord), texture(texture1, tex1Coord), texture1Visibility);
