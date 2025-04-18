@@ -16,6 +16,7 @@ public static class Program
     private static GL gl;
 
     static Matrix4X4<float> trans;
+    static Matrix4X4<float> model, view, projection;
     public static void Main()
     {
 
@@ -37,13 +38,112 @@ public static class Program
         window.Run();
 
     }
+    private static unsafe void PrepareRenderingTriangle()
+    {
+        texture0 = CreateTexture(texture0Path, PixelFormat.Rgb, GLEnum.ClampToBorder, GLEnum.Linear);
+        texture1 = CreateTexture(texture1Path, PixelFormat.Rgba, GLEnum.Repeat, GLEnum.Linear);
+
+        float[] verticies ={
+             -0.5f, -0.5f, -0.5f,0.0f, 0.0f,
+            0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
+            0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+            0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+            -0.5f,  0.5f, -0.5f, 0.0f, 1.0f,
+            -0.5f, -0.5f, -0.5f, 0.0f, 0.0f,
+
+            -0.5f, -0.5f,  0.5f, 0.0f, 0.0f,
+            0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+            0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+            0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+            -0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
+            -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+
+            -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+            -0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+            -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+            -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+            -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+            -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+
+            0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+            0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+            0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+            0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+            0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+            0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+
+            -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+            0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
+            0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+            0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+            -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+            -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+
+            -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+            0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+            0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+            0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+            -0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
+            -0.5f,  0.5f, -0.5f,  0.0f, 1.0f
+        }
+        ;
+        int[] indicies ={  // note that we start from 0!
+            0, 1, 3,   // first triangle
+            1, 2, 3    // second triangle
+        };
+
+        VBO = gl.GenBuffer();
+        VAO = gl.GenVertexArrays(1);
+        EBO = gl.GenBuffers(1);
+
+        gl.BindVertexArray(VAO);
+
+        gl.BindBuffer(BufferTargetARB.ArrayBuffer, VBO);
+        gl.BufferData<float>(BufferTargetARB.ArrayBuffer, verticies, BufferUsageARB.StaticDraw);
+        gl.BindBuffer(BufferTargetARB.ElementArrayBuffer, EBO);
+        gl.BufferData<int>(BufferTargetARB.ElementArrayBuffer, indicies, BufferUsageARB.StaticDraw);
+
+        gl.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 5 * sizeof(float), 0);
+        gl.EnableVertexAttribArray(0);
+        //gl.VertexAttribPointer(1, 3, VertexAttribPointerType.Float, false, 8 * sizeof(float), 3 * sizeof(float));
+        //gl.EnableVertexAttribArray(1);
+        gl.VertexAttribPointer(2, 2, GLEnum.Float, false, 5 * sizeof(float), 3 * sizeof(float));
+        gl.EnableVertexAttribArray(2);
+
+
+
+        gl.BindBuffer(BufferTargetARB.ArrayBuffer, 0);
+        gl.BindVertexArray(0);
+
+
+
+        shaderProgram = new Common.Shader(gl, vertShaderPath, fragShaderPath);
+
+    }
+
     static DateTime startTime;
     static TimeSpan time => DateTime.Now - startTime;
-    static float smileVisibility = 0;
+    static float smileVisibility = 0.2f;
+
+    static Vector3D<float>[] cubePositions = {
+        new ( 0.0f,  0.0f,  0.0f),
+        new ( 2.0f,  5.0f, -15.0f),
+        new (-1.5f, -2.2f, -2.5f),
+        new (-3.8f, -2.0f, -12.3f),
+        new ( 2.4f, -0.4f, -3.5f),
+        new (-1.7f,  3.0f, -7.5f),
+        new ( 1.3f, -2.0f, -2.5f),
+        new ( 1.5f,  2.0f, -2.5f),
+        new ( 1.5f,  0.2f, -1.5f),
+        new (-1.3f,  1.0f, -1.5f)
+    };
+    static Vector3D<float> camPos = new Vector3D<float>(0,0,-3f);
+
     private static unsafe void OnWindowRender(double obj)
     {
         gl.ClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         gl.Clear(ClearBufferMask.ColorBufferBit);
+        gl.Clear(ClearBufferMask.DepthBufferBit);
 
         shaderProgram.Use();
         gl.Uniform1(gl.GetUniformLocation(shaderProgram.ID, "texture0"), 0);
@@ -56,38 +156,45 @@ public static class Program
 
         gl.BindVertexArray(VAO);
 
-        trans =
-                Matrix4X4<float>.Identity
-                * Matrix4X4.CreateScale<float>(0.5f, 0.5f, 0.5f)
-                * Matrix4X4.CreateFromAxisAngle<float>(new Vector3D<float>(0f, 0f, 1f), (float)time.TotalSeconds)
-                * Matrix4X4.CreateTranslation<float>(0.5f, -0.5f, 0.0f)
-                ;
-        float[] transList = new float[]
-        {
-                trans[0,0],trans[0,1],trans[0,2],trans[0,3],
-                trans[1,0],trans[1,1],trans[1,2],trans[1,3],
-                trans[2,0],trans[2,1],trans[2,2],trans[2,3],
-                trans[3,0],trans[3,1],trans[3,2],trans[3,3],
-        };
-        gl.UniformMatrix4(gl.GetUniformLocation(shaderProgram.ID, "transform"), false,
-        (ReadOnlySpan<float>)transList);
-        gl.DrawElements(PrimitiveType.TriangleStrip, 6, DrawElementsType.UnsignedInt, null);
+        trans = Matrix4X4<float>.Identity;
 
-        trans =
-                Matrix4X4<float>.Identity
-                * Matrix4X4.CreateScale<float>((float)Math.Sin(time.TotalSeconds))
-                * Matrix4X4.CreateTranslation<float>(-0.5f, 0.5f, 0.0f)
-                ;
-        transList = new float[]
+        var axis = new Vector3D<float>(1.0f, 0.3f, 0.5f);
+        axis = axis / axis.Length;
+        view =Matrix4X4.CreateTranslation(camPos);
+        //Matrix4X4.Invert(view, out view);
+        projection = Matrix4X4<float>.Identity * Matrix4X4.CreatePerspectiveFieldOfView(float.DegreesToRadians(
+                45f
+            ), ((float)window.Size.X) / window.Size.Y,
+        0.1f, 100f);
+
+
+        for (int i = 0; i < cubePositions.Count(); i++)
         {
+            var cur = cubePositions[i];
+            bool rotate = i % 3 == 0;
+            float rotationDegree = 20f*i;
+            if(rotate){
+                rotationDegree += (float)time.TotalSeconds*10;
+            }
+            model = Matrix4X4<float>.Identity
+                * Matrix4X4.CreateFromAxisAngle<float>(axis, float.DegreesToRadians(rotationDegree))
+                * Matrix4X4.CreateTranslation(cur)
+            ;
+            trans = model * view * projection;
+            float[] transList = new float[]
+            {
                 trans[0,0],trans[0,1],trans[0,2],trans[0,3],
                 trans[1,0],trans[1,1],trans[1,2],trans[1,3],
                 trans[2,0],trans[2,1],trans[2,2],trans[2,3],
                 trans[3,0],trans[3,1],trans[3,2],trans[3,3],
-        };
-        gl.UniformMatrix4(gl.GetUniformLocation(shaderProgram.ID, "transform"), false,
-        (ReadOnlySpan<float>)transList);
-        gl.DrawElements(PrimitiveType.TriangleStrip, 6, DrawElementsType.UnsignedInt, null);
+            };
+            gl.UniformMatrix4(gl.GetUniformLocation(shaderProgram.ID, "transform"), false,
+            (ReadOnlySpan<float>)transList);
+            //gl.DrawElements(PrimitiveType.TriangleStrip, 6, DrawElementsType.UnsignedInt, null);
+            gl.Enable(EnableCap.DepthTest);
+            gl.DrawArrays(GLEnum.Triangles, 0, 36);
+        }
+
     }
 
     private static void OnWindowLoad()
@@ -138,15 +245,6 @@ public static class Program
         {
             window.Close();
         }
-        if (key == Key.Up)
-        {
-            smileVisibility = MathF.Min(smileVisibility + 0.1f, 1.0f);
-        }
-        if (key == Key.Down)
-        {
-            smileVisibility = MathF.Max(smileVisibility - 0.1f, 0.0f);
-        }
-
     }
 
     private static void OnFramebufferResized(Vector2D<int> d)
@@ -154,8 +252,25 @@ public static class Program
         gl.Viewport(0, 0, (uint)window.Size.X, (uint)window.Size.Y);
     }
 
-    private static void OnWindowUpdate(double obj)
+    private static void OnWindowUpdate(double deltaTime)
     {
+        if (input.Keyboards[0].IsKeyPressed(Key.Up))
+        {
+            camPos += new Vector3D<float>(0f, 0f, 1f) * (float)deltaTime;
+        }
+        else if (input.Keyboards[0].IsKeyPressed(Key.Down))
+        {
+            camPos += new Vector3D<float>(0f, 0f, -1f) * (float)deltaTime;
+        }
+
+        if (input.Keyboards[0].IsKeyPressed(Key.Left))
+        {
+            camPos += new Vector3D<float>(1f, 0f, 0f) * (float)deltaTime;
+        }
+        else if (input.Keyboards[0].IsKeyPressed(Key.Right))
+        {
+            camPos += new Vector3D<float>(-1f, 0f, 0f) * (float)deltaTime;
+        }
     }
 
 
@@ -184,52 +299,6 @@ public static class Program
         //gl.TexImage2D(TextureTarget.Texture2D, 0, InternalFormat.Rgb, (uint)result.Width, (uint)result.Height, 0, PixelFormat.Rgb, PixelType.UnsignedByte, (ReadOnlySpan<byte>)result.Data.AsSpan());
         gl.GenerateMipmap(TextureTarget.Texture2D);
         return texture;
-    }
-    private static unsafe void PrepareRenderingTriangle()
-    {
-        texture0 = CreateTexture(texture0Path, PixelFormat.Rgb, GLEnum.ClampToBorder, GLEnum.Linear);
-        texture1 = CreateTexture(texture1Path, PixelFormat.Rgba, GLEnum.Repeat, GLEnum.Linear);
-
-        float[] verticies ={
-            // positions          // colors           // texture coords
-            0.5f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,   1.0f, 1.0f,   // top right
-            0.5f, -0.5f, 0.0f,   0.0f, 1.0f, 0.0f,   1.0f, 0.0f,   // bottom right
-            -0.5f, -0.5f, 0.0f,  0.0f, 0.0f, 1.0f,   0.0f, 0.0f,   // bottom left
-            -0.5f,  0.5f, 0.0f,  1.0f, 1.0f, 0.0f,   0.0f, 1.0f    // top left 
-        }
-        ;
-        int[] indicies ={  // note that we start from 0!
-            0, 1, 3,   // first triangle
-            1, 2, 3    // second triangle
-        };
-
-        VBO = gl.GenBuffer();
-        VAO = gl.GenVertexArrays(1);
-        EBO = gl.GenBuffers(1);
-
-        gl.BindVertexArray(VAO);
-
-        gl.BindBuffer(BufferTargetARB.ArrayBuffer, VBO);
-        gl.BufferData<float>(BufferTargetARB.ArrayBuffer, verticies, BufferUsageARB.StaticDraw);
-        gl.BindBuffer(BufferTargetARB.ElementArrayBuffer, EBO);
-        gl.BufferData<int>(BufferTargetARB.ElementArrayBuffer, indicies, BufferUsageARB.StaticDraw);
-
-        gl.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 8 * sizeof(float), 0);
-        gl.EnableVertexAttribArray(0);
-        gl.VertexAttribPointer(1, 3, VertexAttribPointerType.Float, false, 8 * sizeof(float), 3 * sizeof(float));
-        gl.EnableVertexAttribArray(1);
-        gl.VertexAttribPointer(2, 2, GLEnum.Float, false, 8 * sizeof(float), 6 * sizeof(float));
-        gl.EnableVertexAttribArray(2);
-
-
-
-        gl.BindBuffer(BufferTargetARB.ArrayBuffer, 0);
-        gl.BindVertexArray(0);
-
-
-
-        shaderProgram = new Common.Shader(gl, vertShaderPath, fragShaderPath);
-
     }
 
 }
