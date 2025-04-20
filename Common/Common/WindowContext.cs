@@ -1,4 +1,5 @@
 using System.Drawing;
+using System.Security.Cryptography.X509Certificates;
 using Silk.NET.Input;
 using Silk.NET.Maths;
 using Silk.NET.OpenGL;
@@ -14,11 +15,12 @@ public class WindowContext
     public IInputContext input { get; private set; }
     public DateTime startTime { get; private set; }
     public event Action<IInputDevice, bool> onInputConnectionChanged;
+    public event Action<WindowContext> onLoad;
     public event Action<WindowContext, double> onUpdate;
     public event Action<WindowContext, double> onRender;
 
-    public bool clearOnRender;
-    public Color clearColor;
+    public bool clearOnRender = true;
+    public Color clearColor = Color.SlateBlue;
 
     public WindowContext(string title, int width, int height)
     {
@@ -30,6 +32,10 @@ public class WindowContext
         window.Load += OnWindowLoad;
         window.Update += OnWindowUpdate;
         window.Render += OnWindowRender;
+    }
+
+    public void Run()
+    {
         window.Run();
     }
 
@@ -39,6 +45,7 @@ public class WindowContext
         input = window.CreateInput();
         window.FramebufferResize += OnFramebufferResized;
         input.ConnectionChanged += OnInputConnectionChanged;
+        onLoad?.Invoke(this);
     }
 
     private void OnInputConnectionChanged(IInputDevice device, bool connected)

@@ -68,5 +68,10 @@ namespace Common
         {
             gl.Uniform2(gl.GetUniformLocation(ID, name), value.X, value.Y);
         }
+
+        public void SetVector3(string v1, float v2, float v3, float v4)
+        {
+            gl.Uniform3(gl.GetUniformLocation(ID, v1), v2, v3, v4);
+        }
     }
 }
