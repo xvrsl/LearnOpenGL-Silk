@@ -1,0 +1,13 @@
+D:\Repos\LearnOpenGL-Silk\Common\Common\bin\Debug\net9.0\Common.deps.json
+D:\Repos\LearnOpenGL-Silk\Common\Common\bin\Debug\net9.0\Common.dll
+D:\Repos\LearnOpenGL-Silk\Common\Common\bin\Debug\net9.0\Common.pdb
+D:\Repos\LearnOpenGL-Silk\Common\Common\obj\Debug\net9.0\Common.csproj.AssemblyReference.cache
+D:\Repos\LearnOpenGL-Silk\Common\Common\obj\Debug\net9.0\Common.GeneratedMSBuildEditorConfig.editorconfig
+D:\Repos\LearnOpenGL-Silk\Common\Common\obj\Debug\net9.0\Common.AssemblyInfoInputs.cache
+D:\Repos\LearnOpenGL-Silk\Common\Common\obj\Debug\net9.0\Common.AssemblyInfo.cs
+D:\Repos\LearnOpenGL-Silk\Common\Common\obj\Debug\net9.0\Common.csproj.CoreCompileInputs.cache
+D:\Repos\LearnOpenGL-Silk\Common\Common\obj\Debug\net9.0\Common.sourcelink.json
+D:\Repos\LearnOpenGL-Silk\Common\Common\obj\Debug\net9.0\Common.dll
+D:\Repos\LearnOpenGL-Silk\Common\Common\obj\Debug\net9.0\refint\Common.dll
+D:\Repos\LearnOpenGL-Silk\Common\Common\obj\Debug\net9.0\Common.pdb
+D:\Repos\LearnOpenGL-Silk\Common\Common\obj\Debug\net9.0\ref\Common.dll

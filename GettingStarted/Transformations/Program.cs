@@ -19,7 +19,6 @@ public static class Program
     static Matrix4X4<float> model, view, projection;
     public static void Main()
     {
-
         InitializeWindow();
     }
 
@@ -137,7 +136,9 @@ public static class Program
         new ( 1.5f,  0.2f, -1.5f),
         new (-1.3f,  1.0f, -1.5f)
     };
-    static Vector3D<float> camPos = new Vector3D<float>(0,0,-3f);
+    
+    static float camSpeed = 10;
+    static Camera camera = new Camera();
 
     private static unsafe void OnWindowRender(double obj)
     {
@@ -160,21 +161,19 @@ public static class Program
 
         var axis = new Vector3D<float>(1.0f, 0.3f, 0.5f);
         axis = axis / axis.Length;
-        view =Matrix4X4.CreateTranslation(camPos);
-        //Matrix4X4.Invert(view, out view);
-        projection = Matrix4X4<float>.Identity * Matrix4X4.CreatePerspectiveFieldOfView(float.DegreesToRadians(
-                45f
-            ), ((float)window.Size.X) / window.Size.Y,
-        0.1f, 100f);
 
+        //camPos = new Vector3D<float>(MathF.Sin((float)time.TotalSeconds), 0, MathF.Cos((float)time.TotalSeconds)) * 10;
+        view = camera.GetViewMatrix();
+        projection = camera.GetProjectionMatrix(window.Size.X,window.Size.Y);
 
         for (int i = 0; i < cubePositions.Count(); i++)
         {
             var cur = cubePositions[i];
             bool rotate = i % 3 == 0;
-            float rotationDegree = 20f*i;
-            if(rotate){
-                rotationDegree += (float)time.TotalSeconds*10;
+            float rotationDegree = 20f * i;
+            if (rotate)
+            {
+                rotationDegree += (float)time.TotalSeconds * 10;
             }
             model = Matrix4X4<float>.Identity
                 * Matrix4X4.CreateFromAxisAngle<float>(axis, float.DegreesToRadians(rotationDegree))
@@ -210,6 +209,11 @@ public static class Program
         {
             RegisterKeyboardEvents(cur);
         }
+        foreach (var cur in input.Mice)
+        {
+            Console.WriteLine("Registering mouse");
+            RegisterMouseEvents(cur);
+        }
 
         PrepareRenderingTriangle();
     }
@@ -221,6 +225,28 @@ public static class Program
             if (connected) RegisterKeyboardEvents(keyboard);
             else UnregiseterKeyboardEvents(keyboard);
         }
+        if (device is IMouse mouse)
+        {
+            if (connected) RegisterMouseEvents(mouse);
+            else UnregisterMouseEvents(mouse);
+        }
+    }
+
+    private static void UnregisterMouseEvents(IMouse mouse)
+    {
+        mouse.MouseMove += OnMouseMove;
+    }
+
+    private static void RegisterMouseEvents(IMouse mouse)
+    {
+        mouse.MouseMove -= OnMouseMove;
+    }
+
+    static Vector2 mouseDelta;
+    private static void OnMouseMove(IMouse mouse, Vector2 vector)
+    {
+        Console.WriteLine($"Mouse move: {vector}");
+        mouseDelta += vector;
     }
 
     private static void UnregiseterKeyboardEvents(IKeyboard keyboard)
@@ -252,25 +278,44 @@ public static class Program
         gl.Viewport(0, 0, (uint)window.Size.X, (uint)window.Size.Y);
     }
 
+    static float lastMouseX, lastMouseY;
     private static void OnWindowUpdate(double deltaTime)
     {
-        if (input.Keyboards[0].IsKeyPressed(Key.Up))
+
+        if (input.Keyboards[0].IsKeyPressed(Key.W))
         {
-            camPos += new Vector3D<float>(0f, 0f, 1f) * (float)deltaTime;
+            camera.camPos += camera.Forward * (float)deltaTime * camSpeed;
         }
-        else if (input.Keyboards[0].IsKeyPressed(Key.Down))
+        else if (input.Keyboards[0].IsKeyPressed(Key.S))
         {
-            camPos += new Vector3D<float>(0f, 0f, -1f) * (float)deltaTime;
+            camera.camPos += camera.Backward * (float)deltaTime * camSpeed;
         }
 
-        if (input.Keyboards[0].IsKeyPressed(Key.Left))
+        if (input.Keyboards[0].IsKeyPressed(Key.A))
         {
-            camPos += new Vector3D<float>(1f, 0f, 0f) * (float)deltaTime;
+            camera.camPos += camera.Left * (float)deltaTime * camSpeed;
         }
-        else if (input.Keyboards[0].IsKeyPressed(Key.Right))
+        else if (input.Keyboards[0].IsKeyPressed(Key.D))
         {
-            camPos += new Vector3D<float>(-1f, 0f, 0f) * (float)deltaTime;
+            camera.camPos += camera.Right * (float)deltaTime * camSpeed;
         }
+
+        if (input.Mice.Count != 0)
+        {
+            var mouse = input.Mice[0];
+
+            mouseDelta.X = mouse.Position.X - lastMouseX;
+            mouseDelta.Y = mouse.Position.Y - lastMouseY;
+
+            lastMouseX = mouse.Position.X;
+            lastMouseY = mouse.Position.Y;
+        }
+        if (mouseDelta.LengthSquared() > 0)
+        {
+            camera.yaw = camera.yaw - mouseDelta.X;
+            camera.pitch = Math.Clamp(camera.pitch + mouseDelta.Y, -80, 80);
+        }
+
     }
 
 
