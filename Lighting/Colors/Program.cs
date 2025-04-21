@@ -1,4 +1,5 @@
-﻿using System.Numerics;
+﻿using System.Drawing;
+using System.Numerics;
 using Common;
 using Silk.NET.Input;
 using Silk.NET.Maths;
@@ -11,7 +12,7 @@ public static class Program
     static IInputContext input => context.input;
     static Camera camera = new Camera()
     {
-        camPos = new(0, 0, 3)
+        position = new(0, 0, 3)
     };
     static float cameraSpeed = 1f;
     public static void Main()
@@ -28,47 +29,47 @@ public static class Program
     static uint objectVAO, lightVAO;
 
     static float[] verticies ={
-             -0.5f, -0.5f, -0.5f,0.0f, 0.0f,
-            0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
-            0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-            0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-            -0.5f,  0.5f, -0.5f, 0.0f, 1.0f,
-            -0.5f, -0.5f, -0.5f, 0.0f, 0.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+        0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+        0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+        0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+        -0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
 
-            -0.5f, -0.5f,  0.5f, 0.0f, 0.0f,
-            0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-            0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-            0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-            -0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
-            -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
+        0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
+        0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
+        0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
+        -0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
 
-            -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-            -0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-            -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-            -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-            -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-            -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+        -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
+        -0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
+        -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
+        -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
+        -0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
+        -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
 
-            0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-            0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-            0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-            0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-            0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-            0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+        0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
+        0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
+        0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
+        0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
+        0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
+        0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
 
-            -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-            0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
-            0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-            0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-            -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-            -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
+        0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
+        0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
+        0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
 
-            -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
-            0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-            0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-            0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-            -0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
-            -0.5f,  0.5f, -0.5f,  0.0f, 1.0f
+        -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
+        0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
+        0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
+        0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
+        -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
+        -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f
         }
    ;
     private static unsafe void OnLoad(WindowContext context)
@@ -83,17 +84,17 @@ public static class Program
         lightVAO = gl.GenVertexArray();
         gl.BindVertexArray(lightVAO);
         gl.BindBuffer(BufferTargetARB.ArrayBuffer, vbo);
-        gl.VertexAttribPointer(0, 3, GLEnum.Float, false, 5 * sizeof(float), 0);
+        gl.VertexAttribPointer(0, 3, GLEnum.Float, false, 6 * sizeof(float), 0);
         gl.EnableVertexAttribArray(0);
-        gl.VertexAttribPointer(1, 2, GLEnum.Float, false, 5 * sizeof(float), 3 * sizeof(float));
+        gl.VertexAttribPointer(1, 2, GLEnum.Float, false, 6 * sizeof(float), 3 * sizeof(float));
         gl.EnableVertexAttribArray(1);
 
         objectVAO = gl.GenVertexArray();
         gl.BindVertexArray(objectVAO);
         gl.BindBuffer(BufferTargetARB.ArrayBuffer, vbo);
-        gl.VertexAttribPointer(0, 3, GLEnum.Float, false, 5 * sizeof(float), 0);
+        gl.VertexAttribPointer(0, 3, GLEnum.Float, false, 6 * sizeof(float), 0);
         gl.EnableVertexAttribArray(0);
-        gl.VertexAttribPointer(1, 2, GLEnum.Float, false, 5 * sizeof(float), 3 * sizeof(float));
+        gl.VertexAttribPointer(1, 2, GLEnum.Float, false, 6 * sizeof(float), 3 * sizeof(float));
         gl.EnableVertexAttribArray(1);
 
         lightShader = new Common.Shader(gl, @"..\..\..\shader.vs", @"..\..\..\shader_light.fs");
@@ -111,7 +112,7 @@ public static class Program
         UpdateCamera(deltaTime);
     }
     static Vector2 lastMousePos, mouseDelta;
-    static float mouseSensitivity =0.5f;
+    static float mouseSensitivity = 0.5f;
     private static void UpdateCamera(double deltaTime)
     {
         if (input.Keyboards[0].IsKeyPressed(Key.Escape))
@@ -121,20 +122,20 @@ public static class Program
 
         if (input.Keyboards[0].IsKeyPressed(Key.W))
         {
-            camera.camPos += camera.Forward * (float)deltaTime * cameraSpeed;
+            camera.position += camera.Forward * (float)deltaTime * cameraSpeed;
         }
         else if (input.Keyboards[0].IsKeyPressed(Key.S))
         {
-            camera.camPos += camera.Backward * (float)deltaTime * cameraSpeed;
+            camera.position += camera.Backward * (float)deltaTime * cameraSpeed;
         }
 
         if (input.Keyboards[0].IsKeyPressed(Key.A))
         {
-            camera.camPos += camera.Left * (float)deltaTime * cameraSpeed;
+            camera.position += camera.Left * (float)deltaTime * cameraSpeed;
         }
         else if (input.Keyboards[0].IsKeyPressed(Key.D))
         {
-            camera.camPos += camera.Right * (float)deltaTime * cameraSpeed;
+            camera.position += camera.Right * (float)deltaTime * cameraSpeed;
         }
 
         if (input.Mice.Count != 0)
@@ -148,8 +149,8 @@ public static class Program
         }
         if (mouseDelta.LengthSquared() > 0)
         {
-            camera.yaw = camera.yaw - mouseDelta.X*mouseSensitivity;
-            camera.pitch = Math.Clamp(camera.pitch + mouseDelta.Y*mouseSensitivity, -80, 80);
+            camera.yaw = camera.yaw - mouseDelta.X * mouseSensitivity;
+            camera.pitch = Math.Clamp(camera.pitch + mouseDelta.Y * mouseSensitivity, -80, 80);
         }
 
     }
@@ -176,6 +177,8 @@ public static class Program
         );
         objectShader.SetMatrix("view", view);
         objectShader.SetMatrix("projection", projection);
+        objectShader.SetFloat("ambientStrength", 0.1f);
+        objectShader.SetVector3("ambientColor", 0.5f,1.0f,0.75f);
         gl.DrawArrays(GLEnum.Triangles, 0, (uint)verticies.Length);
     }
 }

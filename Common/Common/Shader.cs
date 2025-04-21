@@ -79,6 +79,11 @@ namespace Common
         {
             gl.UniformMatrix4(gl.GetUniformLocation(ID,v), false, matrix4X4.ToSpan());
         }
+
+        public void SetVector3(string v, Vector3D<float> lightPos)
+        {
+            gl.Uniform3(gl.GetUniformLocation(ID,v), (Vector3)lightPos);
+        }
     }
 
 }

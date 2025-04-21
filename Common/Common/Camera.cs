@@ -6,7 +6,7 @@ namespace Common;
 
 public class Camera
 {
-    public Vector3D<float> camPos = new Vector3D<float>(0, 0, 0f);
+    public Vector3D<float> position = new Vector3D<float>(0, 0, 0f);
     public float yaw = 0, pitch = 0;
     public float nearPlane = 0.1f;
     public float farPlane = 100f;
@@ -18,7 +18,7 @@ public class Camera
     }
     public ProjectionMode projection = ProjectionMode.Perspective;
     public Vector3D<float> Forward => Vector3D.Transform(new Vector3D<float>(0, 0, 1), Quaternion<float>.CreateFromYawPitchRoll(float.DegreesToRadians(yaw), float.DegreesToRadians(pitch), 0));
-    public Vector3D<float> Target => camPos + Forward;
+    public Vector3D<float> Target => position + Forward;
     public Vector3D<float> Direction => Vector3D.Normalize(-Forward);
     Vector3D<float> WorldUp => new(0, 1, 0);
     public Vector3D<float> Right => Vector3D.Normalize(Vector3D.Cross(WorldUp, Direction));
@@ -27,7 +27,7 @@ public class Camera
     public Vector3D<float> Backward => Direction;
     public Matrix4X4<float> GetViewMatrix()
     {
-        return Matrix4X4.CreateLookAt(camPos, Target, Up);
+        return Matrix4X4.CreateLookAt(position, Target, Up);
     }
 
     public Matrix4X4<float> GetProjectionMatrix(float width, float height)
@@ -53,5 +53,10 @@ public class Camera
     public Matrix4X4<float> GetProjectionMatrix(Vector2D<int> size)
     {
         return GetProjectionMatrix(size.X,size.Y);
+    }
+
+    public Matrix4X4<float> GetVPMatrix(Vector2D<int> size)
+    {
+       return GetVPMatrix(size.X,size.Y);
     }
 }

@@ -284,20 +284,20 @@ public static class Program
 
         if (input.Keyboards[0].IsKeyPressed(Key.W))
         {
-            camera.camPos += camera.Forward * (float)deltaTime * camSpeed;
+            camera.position += camera.Forward * (float)deltaTime * camSpeed;
         }
         else if (input.Keyboards[0].IsKeyPressed(Key.S))
         {
-            camera.camPos += camera.Backward * (float)deltaTime * camSpeed;
+            camera.position += camera.Backward * (float)deltaTime * camSpeed;
         }
 
         if (input.Keyboards[0].IsKeyPressed(Key.A))
         {
-            camera.camPos += camera.Left * (float)deltaTime * camSpeed;
+            camera.position += camera.Left * (float)deltaTime * camSpeed;
         }
         else if (input.Keyboards[0].IsKeyPressed(Key.D))
         {
-            camera.camPos += camera.Right * (float)deltaTime * camSpeed;
+            camera.position += camera.Right * (float)deltaTime * camSpeed;
         }
 
         if (input.Mice.Count != 0)

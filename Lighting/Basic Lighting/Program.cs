@@ -11,7 +11,7 @@ public static class Program
     static IInputContext input => context.input;
     static Camera camera = new Camera()
     {
-        camPos = new(0, 0, 3)
+        position = new(0, 0, -3)
     };
     static float cameraSpeed = 1f;
     public static void Main()
@@ -85,7 +85,7 @@ public static class Program
         gl.BindBuffer(BufferTargetARB.ArrayBuffer, vbo);
         gl.VertexAttribPointer(0, 3, GLEnum.Float, false, 6 * sizeof(float), 0);
         gl.EnableVertexAttribArray(0);
-        gl.VertexAttribPointer(1, 2, GLEnum.Float, false, 6 * sizeof(float), 3 * sizeof(float));
+        gl.VertexAttribPointer(1, 3, GLEnum.Float, false, 6 * sizeof(float), 3 * sizeof(float));
         gl.EnableVertexAttribArray(1);
 
         objectVAO = gl.GenVertexArray();
@@ -93,7 +93,7 @@ public static class Program
         gl.BindBuffer(BufferTargetARB.ArrayBuffer, vbo);
         gl.VertexAttribPointer(0, 3, GLEnum.Float, false, 6 * sizeof(float), 0);
         gl.EnableVertexAttribArray(0);
-        gl.VertexAttribPointer(1, 2, GLEnum.Float, false, 6 * sizeof(float), 3 * sizeof(float));
+        gl.VertexAttribPointer(1, 3, GLEnum.Float, false, 6 * sizeof(float), 3 * sizeof(float));
         gl.EnableVertexAttribArray(1);
 
         lightShader = new Common.Shader(gl, @"..\..\..\shader.vs", @"..\..\..\shader_light.fs");
@@ -123,36 +123,60 @@ public static class Program
 
         if (input.Keyboards[0].IsKeyPressed(Key.W))
         {
-            camera.camPos += camera.Forward * (float)deltaTime * cameraSpeed;
+            camera.position += camera.Forward * (float)deltaTime * cameraSpeed;
         }
         else if (input.Keyboards[0].IsKeyPressed(Key.S))
         {
-            camera.camPos += camera.Backward * (float)deltaTime * cameraSpeed;
+            camera.position += camera.Backward * (float)deltaTime * cameraSpeed;
         }
 
         if (input.Keyboards[0].IsKeyPressed(Key.A))
         {
-            camera.camPos += camera.Left * (float)deltaTime * cameraSpeed;
+            camera.position += camera.Left * (float)deltaTime * cameraSpeed;
         }
         else if (input.Keyboards[0].IsKeyPressed(Key.D))
         {
-            camera.camPos += camera.Right * (float)deltaTime * cameraSpeed;
+            camera.position += camera.Right * (float)deltaTime * cameraSpeed;
+        }
+
+        if (input.Keyboards[0].IsKeyPressed(Key.E))
+        {
+            camera.position += camera.Up * (float)deltaTime * cameraSpeed;
+        }
+        else if (input.Keyboards[0].IsKeyPressed(Key.Q))
+        {
+            camera.position += -camera.Up * (float)deltaTime * cameraSpeed;
         }
 
         if (input.Mice.Count != 0)
         {
             var mouse = input.Mice[0];
 
-            mouseDelta.X = mouse.Position.X - lastMousePos.X;
-            mouseDelta.Y = mouse.Position.Y - lastMousePos.Y;
+            if (input.Keyboards[0].IsKeyPressed(Key.ControlLeft))
+            {
+                Vector3D<float> mouseViewPos = new(
+                mouse.Position.X / context.window.Size.X * 2 - 1,
+                -(mouse.Position.Y / context.window.Size.Y * 2 - 1),
+                 0.5f);
+                float depth = Vector3D.Dot(lightPos-camera.position,camera.Forward);
+                float planeHeight = depth * MathF.Tan(float.DegreesToRadians(camera.fieldOfView));
+                float planeWidth = planeHeight / context.window.Size.Y * context.window.Size.X;
+                Vector3D<float> resultPos = camera.position + camera.Forward*depth 
+                    + camera.Up*planeHeight*mouseViewPos.Y/2 
+                    + camera.Right*planeWidth * mouseViewPos.X/2;
 
+                lightPos = resultPos;
+            }
+            mouseDelta = mouse.Position - lastMousePos;
             lastMousePos = mouse.Position;
+
+            if (mouseDelta.LengthSquared() > 0 && mouse.IsButtonPressed(MouseButton.Right))
+            {
+                camera.yaw = camera.yaw - mouseDelta.X * mouseSensitivity;
+                camera.pitch = Math.Clamp(camera.pitch + mouseDelta.Y * mouseSensitivity, -80, 80);
+            }
         }
-        if (mouseDelta.LengthSquared() > 0)
-        {
-            camera.yaw = camera.yaw - mouseDelta.X * mouseSensitivity;
-            camera.pitch = Math.Clamp(camera.pitch + mouseDelta.Y * mouseSensitivity, -80, 80);
-        }
+
 
     }
 
@@ -169,6 +193,7 @@ public static class Program
             );
         lightShader.SetMatrix("view", view);
         lightShader.SetMatrix("projection", projection);
+        gl.Enable(EnableCap.DepthTest);
         gl.DrawArrays(GLEnum.Triangles, 0, (uint)verticies.Length);
 
         gl.BindVertexArray(objectVAO);
@@ -178,6 +203,9 @@ public static class Program
         );
         objectShader.SetMatrix("view", view);
         objectShader.SetMatrix("projection", projection);
+        objectShader.SetVector3("lightPos", lightPos);
+
+        gl.Enable(EnableCap.DepthTest);
         gl.DrawArrays(GLEnum.Triangles, 0, (uint)verticies.Length);
     }
 }
