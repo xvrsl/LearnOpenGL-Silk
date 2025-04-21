@@ -199,7 +199,7 @@ public static class Program
         gl.BindVertexArray(objectVAO);
         objectShader.Use();
         objectShader.SetMatrix("model",
-            Matrix4X4<float>.Identity
+            Matrix4X4.CreateFromAxisAngle<float>(Vector3D.Normalize(Vector3D<float>.One), (float)context.TimeSinceStart.TotalSeconds*1f)
         );
         objectShader.SetMatrix("view", view);
         objectShader.SetMatrix("projection", projection);

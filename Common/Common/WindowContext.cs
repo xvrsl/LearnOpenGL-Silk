@@ -14,6 +14,11 @@ public class WindowContext
     public IWindow window { get; private set; }
     public IInputContext input { get; private set; }
     public DateTime startTime { get; private set; }
+    public TimeSpan TimeSinceStart{
+        get{
+            return DateTime.Now - startTime;
+        }
+    }
     public event Action<IInputDevice, bool> onInputConnectionChanged;
     public event Action<WindowContext> onLoad;
     public event Action<WindowContext, double> onUpdate;
