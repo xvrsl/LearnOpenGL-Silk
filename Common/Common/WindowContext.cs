@@ -20,7 +20,7 @@ public class WindowContext
     public event Action<WindowContext, double> onRender;
 
     public bool clearOnRender = true;
-    public Color clearColor = Color.SlateBlue;
+    public Color clearColor = Color.Black;
 
     public WindowContext(string title, int width, int height)
     {
