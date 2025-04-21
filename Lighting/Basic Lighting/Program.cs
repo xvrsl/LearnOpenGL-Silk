@@ -204,7 +204,7 @@ public static class Program
         objectShader.SetMatrix("view", view);
         objectShader.SetMatrix("projection", projection);
         objectShader.SetVector3("lightPos", lightPos);
-
+        objectShader.SetVector3("viewPos",camera.position);
         gl.Enable(EnableCap.DepthTest);
         gl.DrawArrays(GLEnum.Triangles, 0, (uint)verticies.Length);
     }
