@@ -49,4 +49,9 @@ public class Camera
     {
         return GetViewMatrix() * GetProjectionMatrix(width, height);
     }
+
+    public Matrix4X4<float> GetProjectionMatrix(Vector2D<int> size)
+    {
+        return GetProjectionMatrix(size.X,size.Y);
+    }
 }

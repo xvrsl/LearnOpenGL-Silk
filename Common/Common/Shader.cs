@@ -1,5 +1,6 @@
 ﻿
 using System.Numerics;
+using Silk.NET.Maths;
 using Silk.NET.OpenGL;
 using Silk.NET.Vulkan;
 
@@ -73,5 +74,11 @@ namespace Common
         {
             gl.Uniform3(gl.GetUniformLocation(ID, v1), v2, v3, v4);
         }
+
+        public void SetMatrix(string v, Matrix4X4<float> matrix4X4)
+        {
+            gl.UniformMatrix4(gl.GetUniformLocation(ID,v), false, matrix4X4.ToSpan());
+        }
     }
+
 }
