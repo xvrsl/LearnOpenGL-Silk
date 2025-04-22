@@ -1,4 +1,5 @@
-﻿using System.Numerics;
+﻿using System.Drawing;
+using System.Numerics;
 using Common;
 using Silk.NET.Input;
 using Silk.NET.Maths;
@@ -102,8 +103,15 @@ public static class Program
 
         objectShader = new Common.Shader(gl, @"..\..\..\shader.vs", @"..\..\..\shader_object.fs");
         objectShader.Use();
-        objectShader.SetVector3("objectColor", 1.0f, 0.5f, 0.31f);
-        objectShader.SetVector3("lightColor", 1.0f, 1.0f, 1.0f);
+        objectShader.SetVector3("material.ambient", 1.0f, 0.5f, 0.31f);
+        objectShader.SetVector3("material.diffuse", 1.0f, 0.5f, 0.31f);
+        objectShader.SetVector3("material.specular", 0.5f, 0.5f, 0.5f);
+        objectShader.SetFloat("material.shininess", 32f);
+        objectShader.SetVector3("light.ambient", 0.2f, 0.2f, 0.2f);
+        objectShader.SetVector3("light.diffuse", 0.5f, 0.5f, 0.5f);
+        objectShader.SetVector3("light.specular", 1f, 1f, 1f);
+
+
 
         lastMousePos = input.Mice[0].Position;
     }
@@ -158,12 +166,12 @@ public static class Program
                 mouse.Position.X / context.window.Size.X * 2 - 1,
                 -(mouse.Position.Y / context.window.Size.Y * 2 - 1),
                  0.5f);
-                float depth = Vector3D.Dot(lightPos-camera.position,camera.Forward);
+                float depth = Vector3D.Dot(lightPos - camera.position, camera.Forward);
                 float planeHeight = depth * MathF.Tan(float.DegreesToRadians(camera.fieldOfView));
                 float planeWidth = planeHeight / context.window.Size.Y * context.window.Size.X;
-                Vector3D<float> resultPos = camera.position + camera.Forward*depth 
-                    + camera.Up*planeHeight*mouseViewPos.Y/2 
-                    + camera.Right*planeWidth * mouseViewPos.X/2;
+                Vector3D<float> resultPos = camera.position + camera.Forward * depth
+                    + camera.Up * planeHeight * mouseViewPos.Y / 2
+                    + camera.Right * planeWidth * mouseViewPos.X / 2;
 
                 lightPos = resultPos;
             }
@@ -185,6 +193,13 @@ public static class Program
 
     private static void OnRender(WindowContext context, double deltaTime)
     {
+        Vector3D<float> lightColor = new
+        (
+            MathF.Sin((float)context.TimeSinceStart.TotalSeconds * 2f),
+            MathF.Sin((float)context.TimeSinceStart.TotalSeconds * 0.7f),
+            MathF.Sin((float)context.TimeSinceStart.TotalSeconds * 1.3f)
+        );
+
         gl.BindVertexArray(lightVAO);
         lightShader.Use();
         lightShader.SetMatrix("model",
@@ -193,18 +208,27 @@ public static class Program
             );
         lightShader.SetMatrix("view", view);
         lightShader.SetMatrix("projection", projection);
+        lightShader.SetVector3("lightColor", lightColor);
         gl.Enable(EnableCap.DepthTest);
         gl.DrawArrays(GLEnum.Triangles, 0, (uint)verticies.Length);
 
         gl.BindVertexArray(objectVAO);
         objectShader.Use();
         objectShader.SetMatrix("model",
-            Matrix4X4.CreateFromAxisAngle<float>(Vector3D.Normalize(Vector3D<float>.One), (float)context.TimeSinceStart.TotalSeconds*1f)
+            Matrix4X4.CreateFromAxisAngle<float>(Vector3D.Normalize(Vector3D<float>.One), (float)context.TimeSinceStart.TotalSeconds * 1f)
         );
         objectShader.SetMatrix("view", view);
         objectShader.SetMatrix("projection", projection);
-        objectShader.SetVector3("lightPos", lightPos);
-        objectShader.SetVector3("viewPos",camera.position);
+        objectShader.SetVector3("light.position", lightPos);
+        objectShader.SetVector3("viewPos", camera.position);
+
+
+        Vector3D<float> diffuseColor = lightColor * 0.5f;
+        Vector3D<float> ambientColor = lightColor * 0.2f;
+        objectShader.SetVector3("light.ambient", ambientColor);
+        objectShader.SetVector3("light.diffuse", diffuseColor);
+
+
         gl.Enable(EnableCap.DepthTest);
         gl.DrawArrays(GLEnum.Triangles, 0, (uint)verticies.Length);
     }
