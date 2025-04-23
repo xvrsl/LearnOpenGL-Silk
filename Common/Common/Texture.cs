@@ -16,7 +16,7 @@ public class Texture
         int width = result.Width;
         int height = result.Height;
         uint texture = gl.GenTexture();
-
+        ID = texture;
         gl.BindTexture(TextureTarget.Texture2D, texture);
         gl.TexParameterI(GLEnum.Texture2D, GLEnum.TextureWrapS, (int)wrapMode);
         gl.TexParameterI(GLEnum.Texture2D, GLEnum.TextureWrapT, (int)wrapMode);
@@ -33,7 +33,9 @@ public class Texture
     public void Bind(uint shaderID, string uniformName, TextureUnit target = TextureUnit.Texture0)
     {
         int uniformLocation = gl.GetUniformLocation(shaderID, uniformName);
-        gl.Uniform1(uniformLocation, (int)target | 0x00FF);
+        int bindTarget = (int)target - (int)TextureUnit.Texture0;
+        Console.WriteLine($"bind {bindTarget}");
+        gl.Uniform1(uniformLocation, bindTarget);
         gl.ActiveTexture(target);
         gl.BindTexture(TextureTarget.Texture2D, ID);
     }
