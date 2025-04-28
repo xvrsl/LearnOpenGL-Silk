@@ -211,12 +211,22 @@ public static class Program
             }
         }
 
-
+        if (input.Keyboards[0].IsKeyPressed(Key.KeypadAdd))
+        {
+            spotLightAngle += 1f;
+            spotLightAngle = float.Clamp(spotLightAngle,0,180f);
+        }
+        if (input.Keyboards[0].IsKeyPressed(Key.KeypadSubtract))
+        {
+            spotLightAngle -= 1f;
+            spotLightAngle = float.Clamp(spotLightAngle,0,180f);
+        }
+        
     }
 
     static Matrix4X4<float> view => camera.GetViewMatrix();
     static Matrix4X4<float> projection => camera.GetProjectionMatrix(context.window.Size);
-
+    static float spotLightAngle = 10f;
     private static void OnRender(WindowContext context, double deltaTime)
     {
         Vector3D<float> lightColor = Vector3D<float>.One;
@@ -244,7 +254,8 @@ public static class Program
 
         objectShader.SetVector3("light.position", camera.position);
         objectShader.SetVector3("light.direction", camera.Forward);
-        objectShader.SetFloat("light.cutoff", float.Cos(float.DegreesToRadians(6f)));
+        objectShader.SetFloat("light.cutOff", float.Cos(float.DegreesToRadians(spotLightAngle)));
+        objectShader.SetFloat("light.outerCutOff", float.Cos(float.DegreesToRadians(spotLightAngle+5)));
 
         objectShader.SetFloat("light.constant", 1.0f);
         objectShader.SetFloat("light.linear", 0.09f);
