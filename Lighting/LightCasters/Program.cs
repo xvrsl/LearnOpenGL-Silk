@@ -86,7 +86,13 @@ public static class Program
         new ( 1.5f,  0.2f, -1.5f),
         new (-1.3f,  1.0f, -1.5f)
     };
-
+    static Vector3D<float>[] pointLightPositions =
+    {
+        new (0.7f,0.2f,2.0f),
+        new (2.3f, -3.3f, -4.0f),
+        new (-4.0f,  2.0f, -12.0f),
+        new (0.0f,  0.0f, -3.0f),
+    };
     private static unsafe void OnLoad(WindowContext context)
     {
 
@@ -125,9 +131,6 @@ public static class Program
         objectShader.SetVector3("material.ambient", 1.0f, 0.5f, 0.31f);
         objectShader.SetVector3("material.specular", 0.5f, 0.5f, 0.5f);
         objectShader.SetFloat("material.shininess", 32f);
-        objectShader.SetVector3("light.ambient", 0.2f, 0.2f, 0.2f);
-        objectShader.SetVector3("light.diffuse", 0.5f, 0.5f, 0.5f);
-        objectShader.SetVector3("light.specular", 1f, 1f, 1f);
 
         Common.Texture texAlbedo = new Common.Texture(gl, @"..\..\..\container2.png", PixelFormat.Rgba, GLEnum.Repeat, GLEnum.Linear);
         Common.Texture texSpecular = new Common.Texture(gl, @"..\..\..\container2_specular.png", PixelFormat.Rgba, GLEnum.Repeat, GLEnum.Linear);
@@ -214,14 +217,14 @@ public static class Program
         if (input.Keyboards[0].IsKeyPressed(Key.KeypadAdd))
         {
             spotLightAngle += 1f;
-            spotLightAngle = float.Clamp(spotLightAngle,0,180f);
+            spotLightAngle = float.Clamp(spotLightAngle, 0, 180f);
         }
         if (input.Keyboards[0].IsKeyPressed(Key.KeypadSubtract))
         {
             spotLightAngle -= 1f;
-            spotLightAngle = float.Clamp(spotLightAngle,0,180f);
+            spotLightAngle = float.Clamp(spotLightAngle, 0, 180f);
         }
-        
+
     }
 
     static Matrix4X4<float> view => camera.GetViewMatrix();
@@ -233,16 +236,24 @@ public static class Program
 
         gl.BindVertexArray(lightVAO);
         lightShader.Use();
-        lightShader.SetMatrix("model",
-            Matrix4X4.CreateScale(0.2f)
-            * Matrix4X4.CreateTranslation(lightPos)
-            );
         lightShader.SetMatrix("view", view);
         lightShader.SetMatrix("projection", projection);
         lightShader.SetVector3("lightColor", lightColor);
         gl.Enable(EnableCap.DepthTest);
-        gl.DrawArrays(GLEnum.Triangles, 0, (uint)verticies.Length);
-
+        foreach (var pointLightPos in pointLightPositions)
+        {
+            lightShader.SetMatrix("model",
+                Matrix4X4.CreateScale(0.2f)
+                * Matrix4X4.CreateTranslation(pointLightPos)
+                );
+            gl.DrawArrays(GLEnum.Triangles, 0, (uint)verticies.Length);
+        }
+        //lightShader.SetMatrix("model",
+        //           Matrix4X4.CreateScale(0.2f)
+        //           * Matrix4X4.CreateTranslation(lightPos)
+        //           );
+        //gl.DrawArrays(GLEnum.Triangles, 0, (uint)verticies.Length);
+//
         gl.BindVertexArray(objectVAO);
         objectShader.Use();
 
@@ -252,34 +263,46 @@ public static class Program
         //objectShader.SetVector3("light.position", lightPos);
         //objectShader.SetVector3("light.direction", -0.2f, -1.0f, -0.3f);
 
-        objectShader.SetVector3("light.position", camera.position);
-        objectShader.SetVector3("light.direction", camera.Forward);
-        objectShader.SetFloat("light.cutOff", float.Cos(float.DegreesToRadians(spotLightAngle)));
-        objectShader.SetFloat("light.outerCutOff", float.Cos(float.DegreesToRadians(spotLightAngle+5)));
+        objectShader.SetVector3("spotLight.position", camera.position);
+        objectShader.SetVector3("spotLight.direction", camera.Forward);
+        objectShader.SetFloat("spotLight.cutOff", float.Cos(float.DegreesToRadians(spotLightAngle)));
+        objectShader.SetFloat("spotLight.outerCutOff", float.Cos(float.DegreesToRadians(spotLightAngle + 5)));
 
-        objectShader.SetFloat("light.constant", 1.0f);
-        objectShader.SetFloat("light.linear", 0.09f);
-        objectShader.SetFloat("light.quadratic", 0.032f);
+        objectShader.SetFloat("spotLight.constant", 1.0f);
+        objectShader.SetFloat("spotLight.linear", 0.09f);
+        objectShader.SetFloat("spotLight.quadratic", 0.032f);
 
         objectShader.SetVector3("viewPos", camera.position);
 
-
         Vector3D<float> diffuseColor = lightColor * 0.5f;
         Vector3D<float> ambientColor = lightColor * 0.2f;
-        objectShader.SetVector3("light.ambient", ambientColor);
-        objectShader.SetVector3("light.diffuse", diffuseColor);
+        for (int i = 0; i < pointLightPositions.Length; i++)
+        {
+            objectShader.SetVector3($"pointLights[{i}].position", pointLightPositions[i]);
+            objectShader.SetFloat($"pointLights[{i}].constant", 1.0f);
+            objectShader.SetFloat($"pointLights[{i}].linear", 0.09f);
+            objectShader.SetFloat($"pointLights[{i}].quadratic", 0.032f);
+            objectShader.SetVector3($"pointLights[{i}].ambient", ambientColor);
+            objectShader.SetVector3($"pointLights[{i}].diffuse", diffuseColor);
+            objectShader.SetVector3($"pointLights[{i}].specular", lightColor);
+
+        }
+
+        objectShader.SetVector3("spotLight.ambient", ambientColor);
+        objectShader.SetVector3("spotLight.diffuse", diffuseColor);
+        objectShader.SetVector3("spotLight.specular", lightColor);
 
         gl.Enable(EnableCap.DepthTest);
-        int i = 0;
+        int cubeIndex = 0;
         foreach (var cur in cubePositions)
         {
             var rotateAxis = new Vector3D<float>(1, 3, 0.5f);
             objectShader.SetMatrix("model",
-            Matrix4X4.CreateFromAxisAngle(rotateAxis / rotateAxis.Length, float.DegreesToRadians(20 * i))
+            Matrix4X4.CreateFromAxisAngle(rotateAxis / rotateAxis.Length, float.DegreesToRadians(20 * cubeIndex))
             * Matrix4X4.CreateTranslation<float>(cur)
             );
             gl.DrawArrays(GLEnum.Triangles, 0, (uint)verticies.Length);
-            i++;
+            cubeIndex++;
         }
     }
 }
