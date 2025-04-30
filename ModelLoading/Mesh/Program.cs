@@ -33,7 +33,7 @@ public static class Program
     private static unsafe void OnLoad(WindowContext context)
     {
         model = new Model(gl, @"..\..\..\backpack\backpack.obj");
-
+        Console.WriteLine("Model loaded");
         objectShader = new Common.Shader(gl, @"..\..\..\shader.vs", @"..\..\..\shader_object.fs");
         objectShader.Use();
         objectShader.SetVector3("material.ambient", 1.0f, 0.5f, 0.31f);
@@ -116,7 +116,7 @@ public static class Program
 
         objectShader.SetVector3("viewPos", camera.position);
 
-        
+
         gl.Enable(EnableCap.DepthTest);
         model.Draw(objectShader);
     }

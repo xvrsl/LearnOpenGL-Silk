@@ -39,21 +39,27 @@ public class Model
         }
         Console.WriteLine(path);
         directory = path.Substring(0, path.LastIndexOf('\\'));
-
+        Console.WriteLine("Begin processing nodes");
         ProcessNode(scene->MRootNode, in scene);
     }
     private unsafe void ProcessNode(Node* node, ref readonly Scene* scene)
     {
+        Console.WriteLine($"Processing node: {node->MName}");
         for (uint i = 0; i < node->MNumMeshes; i++)
         {
+            Console.WriteLine($"Processing mesh[{i}]");
             Silk.NET.Assimp.Mesh* mesh = scene->MMeshes[node->MMeshes[i]];
+            Console.WriteLine($"Processing mesh begin[{i}]");
             meshes.Add(ProcessMesh(mesh, in scene));
+            Console.WriteLine($"Processing mesh[{i}] done");
         }
 
+        Console.WriteLine($"Processing child: {node->MName}");
         for (uint i = 0; i < node->MNumChildren; i++)
         {
             ProcessNode(node->MChildren[i], in scene);
         }
+        Console.WriteLine($"Node processed: {node->MName}");
     }
 
     private unsafe Mesh ProcessMesh(Silk.NET.Assimp.Mesh* mesh, ref readonly Scene* scene)
@@ -61,7 +67,7 @@ public class Model
         List<Vertex> verticies = new List<Vertex>();
         List<uint> indicies = new List<uint>();
         List<Texture> textures = new List<Texture>();
-
+        Console.WriteLine("Processing verts");
         for (uint i = 0; i < mesh->MNumVertices; i++)
         {
             Vertex v = new Vertex();
@@ -80,6 +86,7 @@ public class Model
             verticies.Add(v);
         }
 
+        Console.WriteLine("Processing indicies");
         //process indicies
         for (uint i = 0; i < mesh->MNumFaces; i++)
         {
@@ -91,6 +98,7 @@ public class Model
         }
 
         //process material
+        Console.WriteLine("Processing materials");
         if (mesh->MMaterialIndex >= 0)
         {
             Silk.NET.Assimp.Material* material = scene->MMaterials[mesh->MMaterialIndex];
@@ -99,6 +107,7 @@ public class Model
             textures.AddRange(diffuseMaps);
             textures.AddRange(specularMaps);
         }
+        Console.WriteLine("Mesh Processing Done");
         return new Mesh(gl, verticies, indicies, textures);
     }
 
@@ -123,12 +132,12 @@ public class Model
             var found = loadedTextures.Find(e => e.path == path);
             if (found.path == str.AsString)
             {
-                textures.Add(found);    
+                textures.Add(found);
                 continue;
             }
 
             Texture tex = new Texture();
-            tex.id = Common.Texture.TextureFromFile(gl, directory+"\\"+str.AsString, PixelFormat.Rgba, GLEnum.Repeat, GLEnum.Linear);
+            tex.id = Common.Texture.TextureFromFile(gl, directory + "\\" + str.AsString, PixelFormat.Rgba, GLEnum.Repeat, GLEnum.Linear);
             tex.type = typeName;
             tex.path = str;
             textures.Add(tex);
