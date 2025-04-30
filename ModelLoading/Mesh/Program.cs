@@ -30,7 +30,7 @@ public static class Program
     struct Texture
     {
         public uint id;
-        public string type;
+        public string name;
 
     }
 
@@ -46,9 +46,22 @@ public static class Program
             this.textures = new List<Texture>(textures);
             SetupMesh();
         }
-        public void Draw(Common.Shader shader)
+        public unsafe void Draw(Common.Shader shader)
         {
+            for (int i = 0; i < textures.Count; i++)
+            {
+                var texture = textures[i];
 
+                gl.ActiveTexture(GLEnum.Texture0 + i);
+                shader.SetInt("material." + texture.name, i);
+                gl.BindTexture(GLEnum.Texture2D, texture.id);
+            }
+
+            gl.ActiveTexture(GLEnum.Texture0);
+
+            gl.BindVertexArray(VAO);
+            gl.DrawElements(GLEnum.Triangles, indicies.Single(), DrawElementsType.UnsignedInt,null);
+            gl.BindVertexArray(0);
         }
         uint VAO, VBO, EBO;
         unsafe void SetupMesh()
@@ -65,7 +78,7 @@ public static class Program
 
             gl.BindBuffer(BufferTargetARB.ElementArrayBuffer, EBO);
             gl.BufferData<uint>(BufferTargetARB.ElementArrayBuffer, indicies.ToArray(), BufferUsageARB.StaticDraw);
-            int vertexSize= Marshal.SizeOf<Vertex>();
+            int vertexSize = Marshal.SizeOf<Vertex>();
             gl.EnableVertexAttribArray(0);
             gl.VertexAttribPointer(0, 3, GLEnum.Float, false, (uint)vertexSize, Marshal.OffsetOf<Vertex>("position"));
             gl.EnableVertexAttribArray(1);
@@ -84,12 +97,6 @@ public static class Program
         context.onLoad += OnLoad;
         context.onRender += OnRender;
         context.onUpdate += OnUpdate;
-        var posOffset = Marshal.OffsetOf<Vertex>("position");
-        var normOffset = Marshal.OffsetOf<Vertex>("normal");
-        var uvOffset = Marshal.OffsetOf<Vertex>("TexCoords");
-        var dummyOffset = Marshal.OffsetOf<Vertex>("dummy");
-        int vertexSize= Marshal.SizeOf<Vertex>();
-        Console.WriteLine($"TEST {vertexSize} {posOffset} {normOffset} {uvOffset} {dummyOffset}");
 
         context.Run();
     }
