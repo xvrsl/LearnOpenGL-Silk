@@ -39,7 +39,6 @@ public static class Program
         objectShader.SetVector3("material.ambient", 1.0f, 0.5f, 0.31f);
         objectShader.SetVector3("material.specular", 0.5f, 0.5f, 0.5f);
         objectShader.SetFloat("material.shininess", 32f);
-
     }
 
     private static void OnUpdate(WindowContext context, double deltaTime)
