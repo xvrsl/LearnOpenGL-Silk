@@ -39,4 +39,23 @@ public class Texture
         gl.ActiveTexture(target);
         gl.BindTexture(TextureTarget.Texture2D, ID);
     }
+
+    public static unsafe uint TextureFromFile(GL gl, string path, PixelFormat format, GLEnum wrapMode, GLEnum magFilter)
+    {
+        StbImage.stbi_set_flip_vertically_on_load(1);
+        ImageResult result = ImageResult.FromMemory(File.ReadAllBytes(path));
+        int width = result.Width;
+        int height = result.Height;
+        uint texture = gl.GenTexture();
+        gl.BindTexture(TextureTarget.Texture2D, texture);
+        gl.TexParameterI(GLEnum.Texture2D, GLEnum.TextureWrapS, (int)wrapMode);
+        gl.TexParameterI(GLEnum.Texture2D, GLEnum.TextureWrapT, (int)wrapMode);
+        gl.TexParameterI(GLEnum.Texture2D, GLEnum.TextureMinFilter, (int)GLEnum.LinearMipmapLinear);
+        gl.TexParameterI(GLEnum.Texture2D, GLEnum.TextureMagFilter, (int)magFilter);
+        fixed (byte* ptr = result.Data) gl.TexImage2D(TextureTarget.Texture2D, 0, InternalFormat.Rgb, (uint)result.Width, (uint)result.Height, 0, format, PixelType.UnsignedByte, ptr);
+        gl.GenerateMipmap(TextureTarget.Texture2D);
+
+        gl.BindTexture(TextureTarget.Texture2D, 0);
+        return texture;
+    }
 }

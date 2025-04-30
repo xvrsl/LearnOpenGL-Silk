@@ -1,15 +1,19 @@
+using System.Numerics;
 using System.Runtime.InteropServices;
 using Common;
 using Silk.NET.Assimp;
-using Silk.NET.Core.Contexts;
+using Silk.NET.Maths;
+using Silk.NET.OpenGL;
+using StbImageSharp;
 
 public class Model
 {
+    GL gl;
     Assimp assimp;
     List<Mesh> meshes;
     string directory;
 
-    public void Draw(Shader shader)
+    public void Draw(Common.Shader shader)
     {
         for (int i = 0; i < meshes.Count; i++)
         {
@@ -17,8 +21,9 @@ public class Model
         }
     }
 
-    public Model(string path)
+    public Model(GL gl, string path)
     {
+        this.gl = gl;
         assimp = Assimp.GetApi();
         LoadModel(path);
     }
@@ -32,24 +37,103 @@ public class Model
             var str = Marshal.PtrToStringUTF8((IntPtr)errStrPtr);
             Console.WriteLine($"ERROR: ASSIMP: {str}");
         }
-        directory = path.Substring(0,path.LastIndexOf('/'));
+        Console.WriteLine(path);
+        directory = path.Substring(0, path.LastIndexOf('\\'));
 
-        ProcessNode(scene->MRootNode, ref scene);
+        ProcessNode(scene->MRootNode, in scene);
     }
     private unsafe void ProcessNode(Node* node, ref readonly Scene* scene)
     {
+        for (uint i = 0; i < node->MNumMeshes; i++)
+        {
+            Silk.NET.Assimp.Mesh* mesh = scene->MMeshes[node->MMeshes[i]];
+            meshes.Add(ProcessMesh(mesh, in scene));
+        }
 
-        throw new NotImplementedException();
+        for (uint i = 0; i < node->MNumChildren; i++)
+        {
+            ProcessNode(node->MChildren[i], in scene);
+        }
     }
 
-    private unsafe Mesh ProcessMesh(Silk.NET.Assimp.Mesh mesh, ref readonly Scene* scene)
+    private unsafe Mesh ProcessMesh(Silk.NET.Assimp.Mesh* mesh, ref readonly Scene* scene)
     {
-        throw new NotImplementedException();
+        List<Vertex> verticies = new List<Vertex>();
+        List<uint> indicies = new List<uint>();
+        List<Texture> textures = new List<Texture>();
+
+        for (uint i = 0; i < mesh->MNumVertices; i++)
+        {
+            Vertex v = new Vertex();
+            //process verts
+            var rawPos = mesh->MVertices[i];
+            var rawNormal = mesh->MNormals[i];
+            v.position = new(rawPos.X, rawPos.Y, rawPos.Z);
+            v.normal = new(rawNormal.X, rawNormal.Y, rawNormal.Z);
+            if (mesh->MTextureCoords[0] != null)
+            {
+                var rawUV = mesh->MTextureCoords[0][i];
+                v.TexCoords = new(rawUV.X, rawUV.Y);
+            }
+            else v.TexCoords = new(0, 0);
+
+            verticies.Add(v);
+        }
+
+        //process indicies
+        for (uint i = 0; i < mesh->MNumFaces; i++)
+        {
+            Face face = mesh->MFaces[i];
+            for (uint j = 0; j < face.MNumIndices; j++)
+            {
+                indicies.Add(face.MIndices[j]);
+            }
+        }
+
+        //process material
+        if (mesh->MMaterialIndex >= 0)
+        {
+            Silk.NET.Assimp.Material* material = scene->MMaterials[mesh->MMaterialIndex];
+            List<Texture> diffuseMaps = LoadMaterialTextures(material, TextureType.Diffuse, "texture_diffuse");
+            List<Texture> specularMaps = LoadMaterialTextures(material, TextureType.Specular, "texture_diffuse");
+            textures.AddRange(diffuseMaps);
+            textures.AddRange(specularMaps);
+        }
+        return new Mesh(gl, verticies, indicies, textures);
     }
 
-    List<Texture> LoadMaterialTextures(Silk.NET.Assimp.Material mat, Silk.NET.Assimp.TextureType type, string typeName)
+    public static List<Texture> loadedTextures = new List<Texture>();
+    unsafe List<Texture> LoadMaterialTextures(Silk.NET.Assimp.Material* mat, Silk.NET.Assimp.TextureType type, string typeName)
     {
-        throw new NotImplementedException();
+        var count = assimp.GetMaterialTextureCount(mat, type);
+        List<Texture> textures = new List<Texture>();
+        for (uint i = 0; i < count; i++)
+        {
+            AssimpString str = default;
+            TextureMapping mapping = default;
+            uint uvIndex = default;
+            float blend = default;
+            TextureOp op = default;
+            TextureMapMode mapMode = default;
+            uint flags = default;
+            assimp.GetMaterialTexture(mat, type, i, &str, &mapping, &uvIndex, &blend, &op, &mapMode, &flags);
+
+            string path = str.AsString;
+
+            var found = loadedTextures.Find(e => e.path == path);
+            if (found.path == str.AsString)
+            {
+                textures.Add(found);    
+                continue;
+            }
+
+            Texture tex = new Texture();
+            tex.id = Common.Texture.TextureFromFile(gl, directory+"\\"+str.AsString, PixelFormat.Rgba, GLEnum.Repeat, GLEnum.Linear);
+            tex.type = typeName;
+            tex.path = str;
+            textures.Add(tex);
+        }
+        return textures;
     }
 
 

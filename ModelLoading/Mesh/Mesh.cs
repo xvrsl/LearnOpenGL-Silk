@@ -14,17 +14,16 @@ struct Vertex
     public byte dummy;
 }
 
-struct Texture
+public struct Texture
 {
     public uint id;
-    public string name;
-
+    public string type;
+    public string path;
 }
 
 class Mesh
 {
     GL gl;
-    
     public List<Vertex> verticies;
     public List<uint> indicies;
     public List<Texture> textures;
@@ -36,20 +35,28 @@ class Mesh
         this.textures = new List<Texture>(textures);
         SetupMesh();
     }
-    public unsafe void Draw(Common.Shader shader)
+    public unsafe void Draw( Common.Shader shader)
     {
+        uint diffuseNr = 1;
+        uint specularNr = 1;
         for (int i = 0; i < textures.Count; i++)
         {
             var texture = textures[i];
-
             gl.ActiveTexture(GLEnum.Texture0 + i);
-            shader.SetInt("material." + texture.name, i);
+            string num = "";
+            if(texture.type == "texture_diffuse")
+                num = $"{diffuseNr++}";
+            if(texture.type == "texture_specular")
+                num = $"{specularNr++}";
+                
+            shader.SetInt("material." + texture.type + num, i);
             gl.BindTexture(GLEnum.Texture2D, texture.id);
         }
 
         gl.ActiveTexture(GLEnum.Texture0);
 
         gl.BindVertexArray(VAO);
+        shader.Use();
         gl.DrawElements(GLEnum.Triangles, indicies.Single(), DrawElementsType.UnsignedInt, null);
         gl.BindVertexArray(0);
     }

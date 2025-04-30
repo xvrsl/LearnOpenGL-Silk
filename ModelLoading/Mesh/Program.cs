@@ -2,6 +2,7 @@
 using System.Numerics;
 using Common;
 using Silk.NET.Input;
+using Silk.NET.Maths;
 using Silk.NET.OpenGL;
 
 public static class Program
@@ -26,9 +27,19 @@ public static class Program
         context.Run();
     }
 
+    static Model model;
+    static Common.Shader objectShader;
 
     private static unsafe void OnLoad(WindowContext context)
     {
+        model = new Model(gl, @"..\..\..\backpack\backpack.obj");
+
+        objectShader = new Common.Shader(gl, @"..\..\..\shader.vs", @"..\..\..\shader_object.fs");
+        objectShader.Use();
+        objectShader.SetVector3("material.ambient", 1.0f, 0.5f, 0.31f);
+        objectShader.SetVector3("material.specular", 0.5f, 0.5f, 0.5f);
+        objectShader.SetFloat("material.shininess", 32f);
+
     }
 
     private static void OnUpdate(WindowContext context, double deltaTime)
@@ -87,7 +98,26 @@ public static class Program
 
     }
 
+    static Matrix4X4<float> view => camera.GetViewMatrix();
+    static Matrix4X4<float> projection => camera.GetProjectionMatrix(context.window.Size);
+    static float spotLightAngle = 10f;
     private static void OnRender(WindowContext context, double deltaTime)
     {
+        objectShader.SetMatrix("view", view);
+        objectShader.SetMatrix("projection", projection);
+
+        objectShader.SetVector3("spotLight.position", camera.position);
+        objectShader.SetVector3("spotLight.direction", camera.Forward);
+        objectShader.SetFloat("spotLight.cutOff", float.Cos(float.DegreesToRadians(spotLightAngle)));
+        objectShader.SetFloat("spotLight.outerCutOff", float.Cos(float.DegreesToRadians(spotLightAngle + 5)));
+        objectShader.SetFloat("spotLight.constant", 1.0f);
+        objectShader.SetFloat("spotLight.linear", 0.09f);
+        objectShader.SetFloat("spotLight.quadratic", 0.032f);
+
+        objectShader.SetVector3("viewPos", camera.position);
+
+        
+        gl.Enable(EnableCap.DepthTest);
+        model.Draw(objectShader);
     }
 }
