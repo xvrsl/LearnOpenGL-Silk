@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.InteropServices;
 using Common;
@@ -94,6 +95,7 @@ public class Model
         }
 
         //process indicies
+
         for (uint i = 0; i < mesh->MNumFaces; i++)
         {
             Face face = mesh->MFaces[i];
@@ -104,6 +106,7 @@ public class Model
         }
 
         //process material
+
         if (mesh->MMaterialIndex >= 0)
         {
             Silk.NET.Assimp.Material* material = scene->MMaterials[mesh->MMaterialIndex];
@@ -112,6 +115,7 @@ public class Model
             textures.AddRange(diffuseMaps);
             textures.AddRange(specularMaps);
         }
+
         return new Mesh(gl, verticies, indicies, textures);
     }
 
@@ -144,8 +148,9 @@ public class Model
             string p = directory + "\\" + str.AsString;
             tex.id = Common.Texture.TextureFromFile(gl, p, PixelFormat.Rgb, GLEnum.Repeat, GLEnum.Linear);
             tex.type = typeName;
-            tex.path = str;
+            tex.path = path;
             textures.Add(tex);
+            loadedTextures.Add(tex);
         }
 
         return textures;

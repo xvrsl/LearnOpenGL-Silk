@@ -22,7 +22,6 @@ public class Texture
         gl.TexParameterI(GLEnum.Texture2D, GLEnum.TextureWrapT, (int)wrapMode);
         gl.TexParameterI(GLEnum.Texture2D, GLEnum.TextureMinFilter, (int)GLEnum.LinearMipmapLinear);
         gl.TexParameterI(GLEnum.Texture2D, GLEnum.TextureMagFilter, (int)magFilter);
-
         fixed (byte* ptr = result.Data) gl.TexImage2D(TextureTarget.Texture2D, 0, InternalFormat.Rgb, (uint)result.Width, (uint)result.Height, 0, format, PixelType.UnsignedByte, ptr);
         //gl.TexImage2D(TextureTarget.Texture2D, 0, InternalFormat.Rgb, (uint)result.Width, (uint)result.Height, 0, PixelFormat.Rgb, PixelType.UnsignedByte, (ReadOnlySpan<byte>)result.Data.AsSpan());
         gl.GenerateMipmap(TextureTarget.Texture2D);
