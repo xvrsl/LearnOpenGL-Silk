@@ -14,8 +14,10 @@ public class WindowContext
     public IWindow window { get; private set; }
     public IInputContext input { get; private set; }
     public DateTime startTime { get; private set; }
-    public TimeSpan TimeSinceStart{
-        get{
+    public TimeSpan TimeSinceStart
+    {
+        get
+        {
             return DateTime.Now - startTime;
         }
     }
@@ -73,8 +75,11 @@ public class WindowContext
         if (clearOnRender)
         {
             gl.ClearColor(clearColor);
-            gl.Clear(ClearBufferMask.ColorBufferBit);
-            gl.Clear(ClearBufferMask.DepthBufferBit);
+            gl.Clear(
+                ClearBufferMask.ColorBufferBit
+                | ClearBufferMask.DepthBufferBit
+                | ClearBufferMask.StencilBufferBit
+            );
         }
         onRender?.Invoke(this, obj);
     }

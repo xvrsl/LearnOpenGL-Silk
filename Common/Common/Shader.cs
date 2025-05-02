@@ -1,4 +1,5 @@
 ﻿
+using System.Drawing;
 using System.Numerics;
 using Silk.NET.Maths;
 using Silk.NET.OpenGL;
@@ -83,6 +84,11 @@ namespace Common
         public void SetVector3(string v, Vector3D<float> lightPos)
         {
             gl.Uniform3(gl.GetUniformLocation(ID,v), (Vector3)lightPos);
+        }
+
+        public void SetVector4(string v,Vector4 value)
+        {
+            gl.Uniform4(gl.GetUniformLocation(ID,v),value);
         }
     }
 
