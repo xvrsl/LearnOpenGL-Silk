@@ -15,13 +15,20 @@ public static class Program
     {
         position = new(0, 0, -3)
     };
-    static float cameraSpeed = 1f;
+    static float CameraSpeed
+    {
+        get
+        {
+            if(context.input.Keyboards[0].IsKeyPressed(Key.ShiftLeft)) return 10f;
+            return 1f;
+        }
+    }
 
 
     public static void Main()
     {
         context = new WindowContext("Learn OpenGL - Lighting - Colors", 800, 600);
-        context.clearColor = Color.SlateBlue;
+        context.clearColor = Color.DarkGray;
         context.onLoad += OnLoad;
         context.onRender += OnRender;
         context.onUpdate += OnUpdate;
@@ -36,7 +43,7 @@ public static class Program
 
     private static unsafe void OnLoad(WindowContext context)
     {
-        model = new Model(gl, @"..\..\..\backpack\backpack.obj");
+        model = new Model(gl, @"..\..\..\kenney\air-hockey.obj");
         Console.WriteLine("Model loaded");
         //prepare shader
         objectShader = new Common.Shader(gl, @"..\..\..\shader.vs", @"..\..\..\shader_object.fs");
@@ -47,7 +54,7 @@ public static class Program
         gl.Uniform1(gl.GetUniformLocation(objectShader.ID, "material.emission"), 2);
         gl.ActiveTexture(TextureUnit.Texture2);
         gl.BindTexture(TextureTarget.Texture2D, 0);
-        
+
     }
 
     private static void OnUpdate(WindowContext context, double deltaTime)
@@ -65,31 +72,31 @@ public static class Program
 
         if (input.Keyboards[0].IsKeyPressed(Key.W))
         {
-            camera.position += camera.Forward * (float)deltaTime * cameraSpeed;
+            camera.position += camera.Forward * (float)deltaTime * CameraSpeed;
         }
         else if (input.Keyboards[0].IsKeyPressed(Key.S))
         {
-            camera.position += camera.Backward * (float)deltaTime * cameraSpeed;
+            camera.position += camera.Backward * (float)deltaTime * CameraSpeed;
         }
 
         if (input.Keyboards[0].IsKeyPressed(Key.A))
         {
-            camera.position += camera.Left * (float)deltaTime * cameraSpeed;
+            camera.position += camera.Left * (float)deltaTime * CameraSpeed;
         }
         else if (input.Keyboards[0].IsKeyPressed(Key.D))
         {
-            camera.position += camera.Right * (float)deltaTime * cameraSpeed;
+            camera.position += camera.Right * (float)deltaTime * CameraSpeed;
         }
 
         if (input.Keyboards[0].IsKeyPressed(Key.E))
         {
-            camera.position += camera.Up * (float)deltaTime * cameraSpeed;
+            camera.position += camera.Up * (float)deltaTime * CameraSpeed;
         }
         else if (input.Keyboards[0].IsKeyPressed(Key.Q))
         {
-            camera.position += -camera.Up * (float)deltaTime * cameraSpeed;
+            camera.position += -camera.Up * (float)deltaTime * CameraSpeed;
         }
-
+        Console.WriteLine($"{camera.position}");
         if (input.Mice.Count != 0)
         {
             var mouse = input.Mice[0];
@@ -146,9 +153,11 @@ public static class Program
         objectShader.SetVector3("spotLight.specular", lightColor);
         //camera
         objectShader.SetVector3("viewPos", camera.position);
-
-        //enable depth test
+        objectShader.SetFloat("near", camera.nearPlane);
+        objectShader.SetFloat("far", camera.farPlane);
+        //depth test
         gl.Enable(EnableCap.DepthTest);
+        //gl.DepthFunc(DepthFunction.Always);
 
         objectShader.SetMatrix("model", modelMatrix);
     }

@@ -147,7 +147,7 @@ public class Model
 
             Texture tex = new Texture();
             string p = directory + "\\" + str.AsString;
-            tex.id = Common.Texture.TextureFromFile(gl, p, PixelFormat.Rgb, GLEnum.Repeat, GLEnum.Linear);
+            tex.id = Common.Texture.TextureFromFile(gl, p, GLEnum.Repeat, GLEnum.Linear);
             tex.type = typeName;
             tex.path = path;
             textures.Add(tex);

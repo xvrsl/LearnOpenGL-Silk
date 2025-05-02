@@ -39,9 +39,9 @@ public class Texture
         gl.BindTexture(TextureTarget.Texture2D, ID);
     }
 
-    public static unsafe uint TextureFromFile(GL gl, string path, PixelFormat format, GLEnum wrapMode, GLEnum magFilter)
+    public static unsafe uint TextureFromFile(GL gl, string path, GLEnum wrapMode, GLEnum magFilter)
     {
-        StbImage.stbi_set_flip_vertically_on_load(1);
+        //StbImage.stbi_set_flip_vertically_on_load(1);
         ImageResult result = ImageResult.FromMemory(File.ReadAllBytes(path));
         int width = result.Width;
         int height = result.Height;
@@ -51,6 +51,25 @@ public class Texture
         gl.TexParameterI(GLEnum.Texture2D, GLEnum.TextureWrapT, (int)wrapMode);
         gl.TexParameterI(GLEnum.Texture2D, GLEnum.TextureMinFilter, (int)GLEnum.LinearMipmapLinear);
         gl.TexParameterI(GLEnum.Texture2D, GLEnum.TextureMagFilter, (int)magFilter);
+        PixelFormat format = default;
+        switch (result.SourceComp)
+        {
+            case ColorComponents.Default:
+                format = PixelFormat.Rgb;
+                break;
+            case ColorComponents.Grey:
+                format = PixelFormat.Red;
+                break;
+            case ColorComponents.GreyAlpha:
+                format = PixelFormat.RG;
+                break;
+            case ColorComponents.RedGreenBlue:
+                format = PixelFormat.Rgb;
+                break;
+            case ColorComponents.RedGreenBlueAlpha:
+                format = PixelFormat.Rgba;
+                break;
+        }
         fixed (byte* ptr = result.Data) gl.TexImage2D(TextureTarget.Texture2D, 0, InternalFormat.Rgb, (uint)result.Width, (uint)result.Height, 0, format, PixelType.UnsignedByte, ptr);
         gl.GenerateMipmap(TextureTarget.Texture2D);
 

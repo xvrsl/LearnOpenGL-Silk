@@ -59,17 +59,24 @@ in vec2 TexCoords;
 in vec3 Normal;
 in vec3 Position;
 
+uniform float near;
+uniform float far;
+
+float LinearirzeDepth(float depth) {
+    float z = depth * 2.0 - 1.0;
+    float linearDepth = (2.0 * near * far) / (far + near - z * (far - near));
+    return linearDepth;
+}
 void main() {
 
     vec3 normal = normalize(Normal);
     vec3 viewDir = normalize(viewPos - Position);
-    //vec4 albedo = texture(material.diffuse, TexCoords);
     vec3 spotLight = CalcSpotLight(spotLight, normal, Position, viewDir);
 
     vec3 result = vec3(0);
     result += CalcDirLight(dirLight, normal, viewDir);//dir
     result += spotLight;
-    FragColor=vec4(result,1.0);
+    FragColor = vec4(result, 1.0);
     return;
     for(int i = 0; i < NR_POINT_LIGHTS; i++) {
         result += CalcPointLight(pointLights[i], normal, Position, viewDir);
