@@ -68,7 +68,7 @@ float LinearirzeDepth(float depth) {
     return linearDepth;
 }
 void main() {
-
+    vec4 albedo = texture(material.diffuse, TexCoords);
     vec3 normal = normalize(Normal);
     vec3 viewDir = normalize(viewPos - Position);
     vec3 spotLight = CalcSpotLight(spotLight, normal, Position, viewDir);
@@ -76,7 +76,7 @@ void main() {
     vec3 result = vec3(0);
     result += CalcDirLight(dirLight, normal, viewDir);//dir
     result += spotLight;
-    FragColor = vec4(result, 1.0);
+    FragColor = vec4(result, albedo.a);
     return;
     for(int i = 0; i < NR_POINT_LIGHTS; i++) {
         result += CalcPointLight(pointLights[i], normal, Position, viewDir);

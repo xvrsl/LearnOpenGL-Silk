@@ -70,7 +70,7 @@ public class Texture
                 format = PixelFormat.Rgba;
                 break;
         }
-        fixed (byte* ptr = result.Data) gl.TexImage2D(TextureTarget.Texture2D, 0, InternalFormat.Rgb, (uint)result.Width, (uint)result.Height, 0, format, PixelType.UnsignedByte, ptr);
+        fixed (byte* ptr = result.Data) gl.TexImage2D(TextureTarget.Texture2D, 0, InternalFormat.Rgba, (uint)result.Width, (uint)result.Height, 0, format, PixelType.UnsignedByte, ptr);
         gl.GenerateMipmap(TextureTarget.Texture2D);
 
         gl.BindTexture(TextureTarget.Texture2D, 0);
