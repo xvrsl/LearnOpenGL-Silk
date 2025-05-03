@@ -56,39 +56,47 @@ namespace Common
         }
         public void SetBool(string name, bool value)
         {
+            Use();
             gl.Uniform1(gl.GetUniformLocation(ID, name), value ? 1 : 0);
         }
         public void SetInt(string name, int value)
         {
+            Use();
             gl.Uniform1(gl.GetUniformLocation(ID, name), value);
         }
         public void SetFloat(string name, float value)
         {
+            Use();
             gl.Uniform1(gl.GetUniformLocation(ID, name), value);
         }
         public void SetVector2(string name, Vector2 value)
         {
+            Use();
             gl.Uniform2(gl.GetUniformLocation(ID, name), value.X, value.Y);
         }
 
         public void SetVector3(string v1, float v2, float v3, float v4)
         {
+            Use();
             gl.Uniform3(gl.GetUniformLocation(ID, v1), v2, v3, v4);
         }
 
         public void SetMatrix(string v, Matrix4X4<float> matrix4X4)
         {
-            gl.UniformMatrix4(gl.GetUniformLocation(ID,v), false, matrix4X4.ToSpan());
+            Use();
+            gl.UniformMatrix4(gl.GetUniformLocation(ID, v), false, matrix4X4.ToSpan());
         }
 
         public void SetVector3(string v, Vector3D<float> lightPos)
         {
-            gl.Uniform3(gl.GetUniformLocation(ID,v), (Vector3)lightPos);
+            Use();
+            gl.Uniform3(gl.GetUniformLocation(ID, v), (Vector3)lightPos);
         }
 
-        public void SetVector4(string v,Vector4 value)
+        public void SetVector4(string v, Vector4 value)
         {
-            gl.Uniform4(gl.GetUniformLocation(ID,v),value);
+            Use();
+            gl.Uniform4(gl.GetUniformLocation(ID, v), value);
         }
     }
 

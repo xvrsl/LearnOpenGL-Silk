@@ -7,7 +7,7 @@ using Silk.NET.Maths;
 using Silk.NET.OpenGL;
 
 namespace Common.Model;
-struct Vertex
+public struct Vertex
 {
     public Vector3D<float> position;
     public Vector3D<float> normal;
@@ -22,7 +22,7 @@ public struct Texture
     public string path;
 }
 
-class Mesh
+public class Mesh
 {
     GL gl;
     public List<Vertex> verticies;

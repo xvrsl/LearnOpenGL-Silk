@@ -39,9 +39,9 @@ public class Texture
         gl.BindTexture(TextureTarget.Texture2D, ID);
     }
 
-    public static unsafe uint TextureFromFile(GL gl, string path, GLEnum wrapMode, GLEnum magFilter)
+    public static unsafe uint TextureFromFile(GL gl, string path, GLEnum wrapMode, GLEnum magFilter, bool flip = true)
     {
-        //StbImage.stbi_set_flip_vertically_on_load(1);
+        StbImage.stbi_set_flip_vertically_on_load(flip ? 1 : 0);
         ImageResult result = ImageResult.FromMemory(File.ReadAllBytes(path));
         int width = result.Width;
         int height = result.Height;

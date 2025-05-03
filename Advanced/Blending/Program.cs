@@ -37,10 +37,10 @@ public static class Program
     }
     static float[] quadVerts =
     {
-        -0.5f,-0.5f,0.0f,   0,0,1,    0f,0f,
-        0.5f,-0.5f,0.0f,    0,0,1,    1f,0f,
-        0.5f,0.5f,0.0f,     0,0,1,    1f,1f,
-        -0.5f,0.5f,0.0f,    0,0,1,    0f,1f,
+        -0.5f,-0.5f,0.0f,   0,0,-1f,    0f,0f,
+        0.5f,-0.5f,0.0f,    0,0,-1f,    1f,0f,
+        0.5f,0.5f,0.0f,     0,0,-1f,    1f,1f,
+        -0.5f,0.5f,0.0f,    0,0,-1f,    0f,1f,
 
     };
     static int[] quadIndicies =
@@ -58,8 +58,11 @@ public static class Program
         new Vector3(0.5f,  0.0f, -0.6f),
     };
     static uint grassTexture;
+    static Common.Shader shader;
     private static unsafe void OnLoad(WindowContext context)
     {
+        shader = new Common.Shader(gl, "../../../shader.vs", "../../../shader_object.fs");
+
         uint quadVBO = gl.GenBuffer();
         gl.BindBuffer(BufferTargetARB.ArrayBuffer, quadVBO);
         gl.BufferData<float>(BufferTargetARB.ArrayBuffer, quadVerts, BufferUsageARB.StaticDraw);
@@ -67,7 +70,7 @@ public static class Program
         gl.BindBuffer(BufferTargetARB.ElementArrayBuffer, quadEBO);
         gl.BufferData<int>(BufferTargetARB.ElementArrayBuffer, quadIndicies, BufferUsageARB.StaticDraw);
 
-        grassTexture = Common.Texture.TextureFromFile(gl, "../../../grass.png", GLEnum.Repeat, GLEnum.Linear);
+        grassTexture = Common.Texture.TextureFromFile(gl, "../../../grass.png", GLEnum.ClampToEdge, GLEnum.Linear);
         vegitationVAO = gl.GenVertexArray();
         gl.BindVertexArray(vegitationVAO);
         gl.BindTexture(GLEnum.Texture2D, grassTexture);
@@ -78,9 +81,30 @@ public static class Program
         gl.EnableVertexAttribArray(1);
         gl.VertexAttribPointer(1, 3, GLEnum.Float, false, (uint)8 * sizeof(float), 3 * sizeof(float));
         gl.EnableVertexAttribArray(2);
-        gl.VertexAttribPointer(2, 3, GLEnum.Float, false, (uint)8 * sizeof(float), 6 * sizeof(float));
+        gl.VertexAttribPointer(2, 2, GLEnum.Float, false, (uint)8 * sizeof(float), 6 * sizeof(float));
+        gl.BindVertexArray(0);
+
+        shader.Use();
+        shader.SetVector3("material.ambient", 1.0f, 0.5f, 0.31f);
+        shader.SetVector3("material.specular", 0.5f, 0.5f, 0.5f);
+        shader.SetFloat("material.shininess", 1f);
+        shader.SetInt("material.diffuse", 0);
+        gl.BindTexture(TextureTarget.Texture2D, grassTexture);
+        gl.BindTextureUnit(0, grassTexture);
     }
 
+
+    private static unsafe void OnRender(WindowContext context, double deltaTime)
+    {
+        gl.Enable(EnableCap.DepthTest);
+        shader.Use();
+        gl.BindVertexArray(vegitationVAO);
+        foreach (var v in vegetation)
+        {
+            SetShaderContext(shader, Matrix4X4.CreateTranslation(new Vector3D<float>(v.X, v.Y, v.Z)));
+            gl.DrawElements(PrimitiveType.Triangles, (uint)quadIndicies.Length, DrawElementsType.UnsignedInt, null);
+        }
+    }
     private static void OnUpdate(WindowContext context, double deltaTime)
     {
         UpdateCamera(deltaTime);
@@ -140,12 +164,6 @@ public static class Program
     static Matrix4X4<float> projection => camera.GetProjectionMatrix(context.window.Size);
     static float spotLightAngle = 10f;
 
-
-    private static void OnRender(WindowContext context, double deltaTime)
-    {
-
-
-    }
     static void SetShaderContext(Common.Shader shader, Matrix4X4<float> modelMatrix)
     {
         shader.Use();
@@ -160,9 +178,9 @@ public static class Program
         //setup lights
         // dir light
         shader.SetVector3("dirLight.direction", new Vector3D<float>(1, -1, 0.5f));
-        shader.SetVector3("dirLight.ambient", ambientColor);
-        shader.SetVector3("dirLight.diffuse", diffuseColor);
-        shader.SetVector3("dirLight.specular", lightColor);
+        shader.SetVector3("dirLight.ambient", Vector3D<float>.Zero);
+        shader.SetVector3("dirLight.diffuse", Vector3D<float>.Zero);
+        shader.SetVector3("dirLight.specular", Vector3D<float>.Zero);
         // spot light
         shader.SetVector3("spotLight.position", camera.position);
         shader.SetVector3("spotLight.direction", camera.Forward);
