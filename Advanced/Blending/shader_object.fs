@@ -69,18 +69,21 @@ float LinearirzeDepth(float depth) {
 }
 void main() {
     vec4 albedo = texture(material.diffuse, TexCoords);
-    if(albedo.a<0.1f) discard;
-    
+    if(albedo.a < 0.1)
+        discard;
+    FragColor = albedo;
+    return;
+
     vec3 normal = normalize(Normal);
     vec3 viewDir = normalize(viewPos - Position);
 
-    vec3 spotLight = CalcSpotLight(spotLight, normal, Position, viewDir);
-    FragColor = vec4(spotLight, albedo.a);
-    return;
-
+    vec3 spotLightResult = CalcSpotLight(spotLight, normal, Position, viewDir);
+    vec3 dirLightResult = CalcDirLight(dirLight, normal, viewDir);//dir
     vec3 result = vec3(0);
-    //result += CalcDirLight(dirLight, normal, viewDir);//dir
-    result += spotLight;
+    result += spotLightResult;
+    result += dirLightResult;
+    FragColor = vec4(dirLightResult, albedo.a);
+    return;
     FragColor = vec4(result, albedo.a);
     return;
 

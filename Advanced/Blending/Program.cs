@@ -70,7 +70,7 @@ public static class Program
         gl.BindBuffer(BufferTargetARB.ElementArrayBuffer, quadEBO);
         gl.BufferData<int>(BufferTargetARB.ElementArrayBuffer, quadIndicies, BufferUsageARB.StaticDraw);
 
-        grassTexture = Common.Texture.TextureFromFile(gl, "../../../grass.png", GLEnum.ClampToEdge, GLEnum.Linear);
+        grassTexture = Common.Texture.TextureFromFile(gl, "../../../blending_transparent_window.png", GLEnum.ClampToEdge, GLEnum.Linear);
         vegitationVAO = gl.GenVertexArray();
         gl.BindVertexArray(vegitationVAO);
         gl.BindTexture(GLEnum.Texture2D, grassTexture);
@@ -97,8 +97,19 @@ public static class Program
     private static unsafe void OnRender(WindowContext context, double deltaTime)
     {
         gl.Enable(EnableCap.DepthTest);
+        gl.Enable(EnableCap.CullFace);
+        gl.CullFace(TriangleFace.Back);
+        gl.FrontFace(FrontFaceDirection.Ccw);
         shader.Use();
         gl.BindVertexArray(vegitationVAO);
+        gl.Enable(EnableCap.Blend);
+        gl.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+        vegetation.Sort((a, b) =>
+        {
+            var deltaA = a - (Vector3)camera.position;
+            var deltaB = b - (Vector3)camera.position;
+            return (deltaA.LengthSquared() - deltaB.LengthSquared()) > 0 ? -1 : 1;
+        });
         foreach (var v in vegetation)
         {
             SetShaderContext(shader, Matrix4X4.CreateTranslation(new Vector3D<float>(v.X, v.Y, v.Z)));
