@@ -23,15 +23,15 @@ public class Model
         }
     }
 
-    public Model(GL gl, string path)
+    public Model(GL gl, string path, bool flipImageVertical = false)
     {
         this.gl = gl;
         assimp = Assimp.GetApi();
-        LoadModel(path);
+        LoadModel(path, flipImageVertical);
     }
 
 
-    private unsafe void LoadModel(string path)
+    private unsafe void LoadModel(string path, bool flipImageVertical = false)
     {
         Scene* scene = assimp.ImportFile(path, (uint)(Silk.NET.Assimp.PostProcessSteps.Triangulate | PostProcessSteps.FlipUVs));
         if (scene == null || (scene->MFlags & (uint)Silk.NET.Assimp.SceneFlags.Incomplete) != 0 || scene->MRootNode == null)
@@ -42,25 +42,25 @@ public class Model
         }
         Console.WriteLine(path);
         directory = path.Substring(0, path.LastIndexOf('\\'));
-        ProcessNode(scene->MRootNode, in scene);
+        ProcessNode(scene->MRootNode, in scene, flipImageVertical);
     }
-    private unsafe void ProcessNode(Node* node, ref readonly Scene* scene)
+    private unsafe void ProcessNode(Node* node, ref readonly Scene* scene, bool flipImageVertical = false)
     {
         Console.WriteLine($"Processing node: {node->MName}");
         for (uint i = 0; i < node->MNumMeshes; i++)
         {
             Silk.NET.Assimp.Mesh* mesh = scene->MMeshes[node->MMeshes[i]];
-            meshes.Add(ProcessMesh(mesh, in scene));
+            meshes.Add(ProcessMesh(mesh, in scene, flipImageVertical));
         }
 
         Console.WriteLine($"Processing child: {node->MName}");
         for (uint i = 0; i < node->MNumChildren; i++)
         {
-            ProcessNode(node->MChildren[i], in scene);
+            ProcessNode(node->MChildren[i], in scene, flipImageVertical);
         }
     }
 
-    private unsafe Mesh ProcessMesh(Silk.NET.Assimp.Mesh* mesh, ref readonly Scene* scene)
+    private unsafe Mesh ProcessMesh(Silk.NET.Assimp.Mesh* mesh, ref readonly Scene* scene, bool flipImageVertical = false)
     {
         List<Vertex> verticies = new List<Vertex>();
         List<uint> indicies = new List<uint>();
@@ -99,8 +99,8 @@ public class Model
         if (mesh->MMaterialIndex >= 0)
         {
             Silk.NET.Assimp.Material* material = scene->MMaterials[mesh->MMaterialIndex];
-            List<Texture> diffuseMaps = LoadMaterialTextures(material, TextureType.Diffuse, "texture_diffuse");
-            List<Texture> specularMaps = LoadMaterialTextures(material, TextureType.Specular, "texture_diffuse");
+            List<Texture> diffuseMaps = LoadMaterialTextures(material, TextureType.Diffuse, "texture_diffuse",flipImageVertical);
+            List<Texture> specularMaps = LoadMaterialTextures(material, TextureType.Specular, "texture_diffuse",flipImageVertical);
             textures.AddRange(diffuseMaps);
             textures.AddRange(specularMaps);
         }
@@ -109,7 +109,7 @@ public class Model
     }
 
     public static List<Texture> loadedTextures = new List<Texture>();
-    unsafe List<Texture> LoadMaterialTextures(Silk.NET.Assimp.Material* mat, Silk.NET.Assimp.TextureType type, string typeName)
+    unsafe List<Texture> LoadMaterialTextures(Silk.NET.Assimp.Material* mat, Silk.NET.Assimp.TextureType type, string typeName,bool flipImageVertical= false)
     {
         var count = assimp.GetMaterialTextureCount(mat, type);
         List<Texture> textures = new List<Texture>();
@@ -135,7 +135,7 @@ public class Model
 
             Texture tex = new Texture();
             string p = directory + "\\" + str.AsString;
-            tex.id = Common.Texture.TextureFromFile(gl, p, GLEnum.Repeat, GLEnum.Linear);
+            tex.id = Common.Texture.TextureFromFile(gl, p, GLEnum.Repeat, GLEnum.Linear,flipImageVertical);
             tex.type = typeName;
             tex.path = path;
             textures.Add(tex);
