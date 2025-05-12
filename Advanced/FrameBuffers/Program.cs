@@ -38,14 +38,12 @@ public static class Program
 
     static Model model;
     static Common.Shader objectShader;
-   //static Common.Shader outlineShader;
     static uint objectVAO;
 
 
-    static uint frameBuffer;
     private static unsafe void OnLoad(WindowContext context)
     {
-        model = new Model(gl, @"..\..\..\kenney\air-hockey.obj",false);
+        model = new Model(gl, @"..\..\..\kenney\air-hockey.obj");
         Console.WriteLine("Model loaded");
         //prepare shader
         objectShader = new Common.Shader(gl, @"..\..\..\shader.vs", @"..\..\..\shader_object.fs");
@@ -54,17 +52,10 @@ public static class Program
         objectShader.SetVector3("material.specular", 0.5f, 0.5f, 0.5f);
         objectShader.SetFloat("material.shininess", 32f);
 
-        //outlineShader = new Common.Shader(gl, @"..\..\..\shader_outline.vs", @"..\..\..\shader_color.fs");
-        //outlineShader.Use();
-        //outlineShader.SetFloat("offset", 0.01f);
-        //outlineShader.SetVector4("color", new Vector4(100f, 0, 0, 100f));
-
         gl.Uniform1(gl.GetUniformLocation(objectShader.ID, "material.emission"), 2);
         gl.ActiveTexture(TextureUnit.Texture2);
         gl.BindTexture(TextureTarget.Texture2D, 0);
 
-        frameBuffer = gl.GenFramebuffer();
-        gl.BindFramebuffer(FramebufferTarget.Framebuffer, frameBuffer);
     }
 
     private static void OnUpdate(WindowContext context, double deltaTime)
@@ -129,30 +120,17 @@ public static class Program
     {
         gl.Enable(EnableCap.DepthTest);
         gl.Enable(EnableCap.StencilTest);
-        gl.StencilOp(StencilOp.Keep, StencilOp.Keep, StencilOp.Replace);
 
-        gl.ClearColor(Color.Black);
+        gl.ClearColor(Color.Navy);
         gl.Clear(ClearBufferMask.ColorBufferBit);
         gl.Clear(ClearBufferMask.DepthBufferBit);
         gl.Clear(ClearBufferMask.StencilBufferBit);
         SetupShaders(Matrix4X4<float>.Identity);
 
-        //draw
-        gl.StencilFunc(StencilFunction.Always, 1, 0xff);
-        gl.StencilMask(0xFF);
         model.Draw(objectShader);
 
-        //gl.StencilFunc(StencilFunction.Notequal, 1, 0xFF);
-        //gl.StencilMask(0x00);
-        //gl.Disable(EnableCap.DepthTest);
-        //model.Draw(outlineShader);
-
-        gl.StencilMask(0xFF);//stencil mask is nessisary on clearing
-        gl.StencilFunc(GLEnum.Always, 1, 0xFF);
-        gl.Enable(EnableCap.DepthTest);
-
-
     }
+    
     static void SetShaderContext(Common.Shader shader, Matrix4X4<float> modelMatrix)
     {
         shader.Use();
@@ -190,6 +168,5 @@ public static class Program
     static void SetupShaders(Matrix4X4<float> modelMatrix)
     {
         SetShaderContext(objectShader, modelMatrix);
-        //SetShaderContext(outlineShader, modelMatrix);
     }
 }
