@@ -5,6 +5,7 @@ using Common.Model;
 using Silk.NET.Input;
 using Silk.NET.Maths;
 using Silk.NET.OpenGL;
+using Silk.NET.Vulkan;
 
 public static class Program
 {
@@ -40,6 +41,7 @@ public static class Program
     static Common.Shader objectShader;
     static uint objectVAO;
 
+    static uint frameBuffer;
 
     private static unsafe void OnLoad(WindowContext context)
     {
@@ -56,6 +58,42 @@ public static class Program
         gl.ActiveTexture(TextureUnit.Texture2);
         gl.BindTexture(TextureTarget.Texture2D, 0);
 
+        //frame buffer
+        frameBuffer = gl.GenFramebuffer();
+        gl.BindFramebuffer(FramebufferTarget.Framebuffer, frameBuffer);
+
+        uint textureColorBuffer;
+        textureColorBuffer = gl.GenTexture();
+        gl.BindTexture(TextureTarget.Texture2D, textureColorBuffer);
+        gl.TexImage2D(TextureTarget.Texture2D, 0, InternalFormat.Rgb, 800, 600, 0, PixelFormat.Rgb, PixelType.Int,null);
+        gl.TexParameterI(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)GLEnum.Linear);
+        gl.TexParameterI(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)GLEnum.Linear);
+        gl.BindTexture(TextureTarget.Texture2D, 0);
+
+
+        gl.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.ColorAttachment0, TextureTarget.Texture2D, textureColorBuffer, 0);
+
+        if (gl.CheckFramebufferStatus(FramebufferTarget.Framebuffer) != GLEnum.FramebufferComplete)
+        {
+            Console.WriteLine("ERROR: Frame Buffer is not complete (1)");
+        }
+        else
+        {
+            Console.WriteLine("Texture attached");
+        }
+        uint rbo;
+        rbo = gl.GenRenderbuffer();
+        gl.BindRenderbuffer(RenderbufferTarget.Renderbuffer, rbo);
+        gl.RenderbufferStorage(RenderbufferTarget.Renderbuffer, InternalFormat.Depth24Stencil8, 800, 600);
+        gl.BindRenderbuffer(RenderbufferTarget.Renderbuffer, 0);
+
+        gl.FramebufferRenderbuffer(FramebufferTarget.Framebuffer, FramebufferAttachment.DepthStencilAttachment, RenderbufferTarget.Renderbuffer, rbo);
+
+        if (gl.CheckFramebufferStatus(FramebufferTarget.Framebuffer) != GLEnum.FramebufferComplete)
+        {
+            Console.WriteLine("ERROR: Frame Buffer is not complete (2)");
+        }
+        gl.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
     }
 
     private static void OnUpdate(WindowContext context, double deltaTime)
@@ -130,7 +168,7 @@ public static class Program
         model.Draw(objectShader);
 
     }
-    
+
     static void SetShaderContext(Common.Shader shader, Matrix4X4<float> modelMatrix)
     {
         shader.Use();
