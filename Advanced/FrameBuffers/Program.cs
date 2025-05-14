@@ -43,10 +43,10 @@ public static class Program
     static uint objectVAO;
     static uint screenVAO;
     static float[] ScreenVerts = {
-        -1,-1,0,
-        1,-1,0,
-        1,1,0,
-        -1,1,0
+        -1,-1,0,    0,0,
+        1,-1,0,     1,0,
+        1,1,0,      1,1,
+        -1,1,0,     0,1
     };
     static uint[] ScreenIndices ={
         0,1,2,
@@ -54,7 +54,7 @@ public static class Program
     };
 
     static uint frameBuffer;
-
+    static uint textureColorBuffer;
     private static unsafe void OnLoad(WindowContext context)
     {
         model = new Model(gl, @"..\..\..\kenney\air-hockey.obj");
@@ -77,7 +77,6 @@ public static class Program
         frameBuffer = gl.GenFramebuffer();
         gl.BindFramebuffer(FramebufferTarget.Framebuffer, frameBuffer);
 
-        uint textureColorBuffer;
         textureColorBuffer = gl.GenTexture();
         gl.BindTexture(TextureTarget.Texture2D, textureColorBuffer);
         gl.TexImage2D(TextureTarget.Texture2D, 0, InternalFormat.Rgb, 800, 600, 0, PixelFormat.Rgb, PixelType.Int, null);
@@ -121,7 +120,9 @@ public static class Program
         gl.BindBuffer(BufferTargetARB.ArrayBuffer, screenVertBuffer);
         gl.BufferData<float>(BufferTargetARB.ArrayBuffer, ScreenVerts, BufferUsageARB.StaticDraw);
         gl.EnableVertexAttribArray(0);
-        gl.VertexAttribPointer(0, 3, GLEnum.Float, false, 3*sizeof(float),0);
+        gl.VertexAttribPointer(0, 3, GLEnum.Float, false, 5 * sizeof(float), 0);
+        gl.EnableVertexAttribArray(1);
+        gl.VertexAttribPointer(1, 2, GLEnum.Float, false, 5 * sizeof(float), 3 * sizeof(float));
         uint screenElementBuffer = gl.GenBuffer();
         gl.BindBuffer(BufferTargetARB.ElementArrayBuffer, screenElementBuffer);
         gl.BufferData<uint>(BufferTargetARB.ElementArrayBuffer, ScreenIndices, BufferUsageARB.StaticDraw);
@@ -188,28 +189,30 @@ public static class Program
     static Matrix4X4<float> view => camera.GetViewMatrix();
     static Matrix4X4<float> projection => camera.GetProjectionMatrix(context.window.Size);
     static float spotLightAngle = 10f;
-    private static unsafe void  OnRender(WindowContext context, double deltaTime)
+    private static unsafe void OnRender(WindowContext context, double deltaTime)
     {
         Console.WriteLine("R1");
+        gl.BindFramebuffer(FramebufferTarget.Framebuffer, frameBuffer);
         gl.Enable(EnableCap.DepthTest);
         gl.Enable(EnableCap.StencilTest);
-
-
         gl.ClearColor(Color.DarkSlateBlue);
         gl.Clear(ClearBufferMask.ColorBufferBit);
         gl.Clear(ClearBufferMask.DepthBufferBit);
         gl.Clear(ClearBufferMask.StencilBufferBit);
         SetupShaders(Matrix4X4<float>.Identity);
-
         model.Draw(objectShader);
+
+        gl.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
+        gl.ClearColor(1, 1, 1, 1);
+        gl.Clear(ClearBufferMask.ColorBufferBit);
+
 
         screenShader.Use();
         gl.BindVertexArray(screenVAO);
-        gl.DrawElements(PrimitiveType.Lines, (uint)ScreenIndices.Length, DrawElementsType.UnsignedInt, null);
-        //gl.DrawArrays(PrimitiveType.Triangles,0,6);
-
-
-
+        gl.Disable(EnableCap.DepthTest);
+        gl.BindTexture(TextureTarget.Texture2D, textureColorBuffer);
+        gl.DrawElements(PrimitiveType.Triangles, (uint)ScreenIndices.Length, DrawElementsType.UnsignedInt, null);
+        //gl.DrawElements(PrimitiveType.Lines, (uint)ScreenIndices.Length, DrawElementsType.UnsignedInt, null);
     }
 
     static void SetShaderContext(Common.Shader shader, Matrix4X4<float> modelMatrix)
