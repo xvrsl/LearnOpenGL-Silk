@@ -39,7 +39,19 @@ public static class Program
 
     static Model model;
     static Common.Shader objectShader;
+    static Common.Shader screenShader;
     static uint objectVAO;
+    static uint screenVAO;
+    static float[] ScreenVerts = {
+        -1,-1,0,
+        1,-1,0,
+        1,1,0,
+        -1,1,0
+    };
+    static uint[] ScreenIndices ={
+        0,1,2,
+        0,2,3
+    };
 
     static uint frameBuffer;
 
@@ -49,6 +61,9 @@ public static class Program
         Console.WriteLine("Model loaded");
         //prepare shader
         objectShader = new Common.Shader(gl, @"..\..\..\shader.vs", @"..\..\..\shader_object.fs");
+        screenShader = new Common.Shader(gl, @"..\..\..\FrameBufferShader.vs", @"..\..\..\FrameBufferShader.fs");
+
+
         objectShader.Use();
         objectShader.SetVector3("material.ambient", 1.0f, 0.5f, 0.31f);
         objectShader.SetVector3("material.specular", 0.5f, 0.5f, 0.5f);
@@ -65,7 +80,7 @@ public static class Program
         uint textureColorBuffer;
         textureColorBuffer = gl.GenTexture();
         gl.BindTexture(TextureTarget.Texture2D, textureColorBuffer);
-        gl.TexImage2D(TextureTarget.Texture2D, 0, InternalFormat.Rgb, 800, 600, 0, PixelFormat.Rgb, PixelType.Int,null);
+        gl.TexImage2D(TextureTarget.Texture2D, 0, InternalFormat.Rgb, 800, 600, 0, PixelFormat.Rgb, PixelType.Int, null);
         gl.TexParameterI(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)GLEnum.Linear);
         gl.TexParameterI(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)GLEnum.Linear);
         gl.BindTexture(TextureTarget.Texture2D, 0);
@@ -93,8 +108,27 @@ public static class Program
         {
             Console.WriteLine("ERROR: Frame Buffer is not complete (2)");
         }
+        else
+        {
+            Console.WriteLine("Depth-Stencil Render Buffer Attached");
+        }
         gl.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
+
+        //configure screen vao
+        uint screenVertBuffer = gl.GenBuffer();
+        screenVAO = gl.GenVertexArray();
+        gl.BindVertexArray(screenVAO);
+        gl.BindBuffer(BufferTargetARB.ArrayBuffer, screenVertBuffer);
+        gl.BufferData<float>(BufferTargetARB.ArrayBuffer, ScreenVerts, BufferUsageARB.StaticDraw);
+        gl.EnableVertexAttribArray(0);
+        gl.VertexAttribPointer(0, 3, GLEnum.Float, false, 3*sizeof(float),0);
+        uint screenElementBuffer = gl.GenBuffer();
+        gl.BindBuffer(BufferTargetARB.ElementArrayBuffer, screenElementBuffer);
+        gl.BufferData<uint>(BufferTargetARB.ElementArrayBuffer, ScreenIndices, BufferUsageARB.StaticDraw);
+        gl.BindVertexArray(0);
+        Console.WriteLine("Setup finished");
     }
+
 
     private static void OnUpdate(WindowContext context, double deltaTime)
     {
@@ -154,18 +188,27 @@ public static class Program
     static Matrix4X4<float> view => camera.GetViewMatrix();
     static Matrix4X4<float> projection => camera.GetProjectionMatrix(context.window.Size);
     static float spotLightAngle = 10f;
-    private static void OnRender(WindowContext context, double deltaTime)
+    private static unsafe void  OnRender(WindowContext context, double deltaTime)
     {
+        Console.WriteLine("R1");
         gl.Enable(EnableCap.DepthTest);
         gl.Enable(EnableCap.StencilTest);
 
-        gl.ClearColor(Color.Navy);
+
+        gl.ClearColor(Color.DarkSlateBlue);
         gl.Clear(ClearBufferMask.ColorBufferBit);
         gl.Clear(ClearBufferMask.DepthBufferBit);
         gl.Clear(ClearBufferMask.StencilBufferBit);
         SetupShaders(Matrix4X4<float>.Identity);
 
         model.Draw(objectShader);
+
+        screenShader.Use();
+        gl.BindVertexArray(screenVAO);
+        gl.DrawElements(PrimitiveType.Lines, (uint)ScreenIndices.Length, DrawElementsType.UnsignedInt, null);
+        //gl.DrawArrays(PrimitiveType.Triangles,0,6);
+
+
 
     }
 
