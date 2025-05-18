@@ -29,6 +29,10 @@ public class Camera
     {
         return Matrix4X4.CreateLookAt(position, Target, Up);
     }
+    public Matrix4X4<float> GetViewMatrixWithoutPosition()
+    {
+        return Matrix4X4.CreateLookAt(Vector3D<float>.Zero, Forward, Up);
+    }
 
     public Matrix4X4<float> GetProjectionMatrix(float width, float height)
     {
@@ -52,11 +56,11 @@ public class Camera
 
     public Matrix4X4<float> GetProjectionMatrix(Vector2D<int> size)
     {
-        return GetProjectionMatrix(size.X,size.Y);
+        return GetProjectionMatrix(size.X, size.Y);
     }
 
     public Matrix4X4<float> GetVPMatrix(Vector2D<int> size)
     {
-       return GetVPMatrix(size.X,size.Y);
+        return GetVPMatrix(size.X, size.Y);
     }
 }

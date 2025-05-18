@@ -53,6 +53,8 @@ public class WindowContext
         window.FramebufferResize += OnFramebufferResized;
         input.ConnectionChanged += OnInputConnectionChanged;
         onLoad?.Invoke(this);
+
+        gl.DepthFunc(DepthFunction.Lequal);
     }
 
     private void OnInputConnectionChanged(IInputDevice device, bool connected)
