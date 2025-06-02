@@ -59,6 +59,7 @@ public class Mesh
         gl.BindVertexArray(VAO);
         shader.Use();
         gl.DrawElements(GLEnum.Triangles, (uint)indicies.Count, DrawElementsType.UnsignedInt, null);
+        //Console.WriteLine($"Drawing indicies: v:{this.verticies.Count} i:{indicies.Count}");
         gl.BindVertexArray(0);
     }
     uint VAO, VBO, EBO;

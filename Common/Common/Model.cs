@@ -40,20 +40,20 @@ public class Model
             var str = Marshal.PtrToStringUTF8((IntPtr)errStrPtr);
             Console.WriteLine($"ERROR: ASSIMP: {str}");
         }
-        Console.WriteLine(path);
+        //Console.WriteLine(path);
         directory = path.Substring(0, path.LastIndexOf('\\'));
         ProcessNode(scene->MRootNode, in scene, flipImageVertical);
     }
     private unsafe void ProcessNode(Node* node, ref readonly Scene* scene, bool flipImageVertical = false)
     {
-        Console.WriteLine($"Processing node: {node->MName}");
+        //Console.WriteLine($"Processing node: {node->MName}");
         for (uint i = 0; i < node->MNumMeshes; i++)
         {
             Silk.NET.Assimp.Mesh* mesh = scene->MMeshes[node->MMeshes[i]];
             meshes.Add(ProcessMesh(mesh, in scene, flipImageVertical));
         }
 
-        Console.WriteLine($"Processing child: {node->MName}");
+        //Console.WriteLine($"Processing child: {node->MName}");
         for (uint i = 0; i < node->MNumChildren; i++)
         {
             ProcessNode(node->MChildren[i], in scene, flipImageVertical);
@@ -100,7 +100,7 @@ public class Model
         {
             Silk.NET.Assimp.Material* material = scene->MMaterials[mesh->MMaterialIndex];
             List<Texture> diffuseMaps = LoadMaterialTextures(material, TextureType.Diffuse, "texture_diffuse",flipImageVertical);
-            List<Texture> specularMaps = LoadMaterialTextures(material, TextureType.Specular, "texture_diffuse",flipImageVertical);
+            List<Texture> specularMaps = LoadMaterialTextures(material, TextureType.Specular, "texture_specular",flipImageVertical);
             textures.AddRange(diffuseMaps);
             textures.AddRange(specularMaps);
         }

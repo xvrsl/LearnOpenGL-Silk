@@ -13,37 +13,25 @@ using StbImageSharp;
 using Shader = Common.Shader;
 public static class Program
 {
+    static Shader objShader;
+    static Shader normShader;
+    static Model backpackModel;
 
-    static float[] points ={
-        -0.5f,  0.5f, 1.0f, 0.0f, 0.0f, // top-left
-     0.5f,  0.5f, 0.0f, 1.0f, 0.0f, // top-right
-     0.5f, -0.5f, 0.0f, 0.0f, 1.0f, // bottom-right
-    -0.5f, -0.5f, 1.0f, 1.0f, 0.0f  // bottom-left  
-    };
-    static Shader shader;
-    static uint vao;
     private static unsafe void OnLoad(WindowContext context)
     {
-        shader = new Shader(gl, "resources/basicVerts.vs", "resources/color.fs", "resources/geo.geo");
-        shader.SetVector4("color", new Vector4(1, 1, 1, 1));
+        objShader = new Shader(gl, "resources/objshader.vs", "resources/objshader.fs", "resources/objshader.geom");
+        normShader = new Shader(gl, "resources/normalLines_vert.glsl", "resources/normalLines_frag.glsl", "resources/normalLines_geo.glsl");
+        backpackModel = new Model(gl, @"resources/backpack\backpack.obj", true);
 
-        vao = gl.GenVertexArray();
-        gl.BindVertexArray(vao);
-        uint vbo = gl.GenBuffer();
-        gl.BindBuffer(BufferTargetARB.ArrayBuffer, vbo);
-        gl.BufferData<float>(BufferTargetARB.ArrayBuffer, points, BufferUsageARB.StaticDraw);
-        gl.VertexAttribPointer(0, 2, VertexAttribPointerType.Float, false, 5 * sizeof(float), 0);
-        gl.EnableVertexAttribArray(0);
-        gl.VertexAttribPointer(1, 3, VertexAttribPointerType.Float, false, 5 * sizeof(float), 2*sizeof(float));
-        gl.EnableVertexAttribArray(1);
-
-        gl.BindVertexArray(0);
     }
     private static unsafe void OnRender(WindowContext context, double deltaTime)
     {
-        gl.BindVertexArray(vao);
-        shader.Use();
-        gl.DrawArrays(PrimitiveType.Points, 0, 4);
+        objShader.SetFloat("time", (float)context.TimeSinceStart.TotalSeconds);
+        gl.Enable(EnableCap.DepthTest);
+        SetShaderContext(objShader, Matrix4X4<float>.Identity);
+        SetShaderContext(normShader, Matrix4X4<float>.Identity);
+        backpackModel.Draw(objShader);
+        backpackModel.Draw(normShader);
     }
 
     #region BASE
@@ -70,7 +58,7 @@ public static class Program
     public static void Main()
     {
         context = new WindowContext("Learn OpenGL", 800, 600);
-        context.clearColor = Color.Black;
+        context.clearColor = Color.DarkSlateBlue;
         context.onLoad += OnLoad;
         context.onRender += OnRender;
         context.onUpdate += OnUpdate;
@@ -134,8 +122,8 @@ public static class Program
     {
         shader.Use();
         //matrices
-        //shader.SetMatrix("view", view);
-        //shader.SetMatrix("projection", projection);
+        shader.SetMatrix("view", view);
+        shader.SetMatrix("projection", projection);
 
         //lights
         Vector3D<float> lightColor = Vector3D<float>.One;
