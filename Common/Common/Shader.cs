@@ -11,7 +11,7 @@ namespace Common
     {
         readonly GL gl;
         public readonly uint ID;
-        public Shader(GL gl, string vertexPath, string fragmentPath)
+        public Shader(GL gl, string vertexPath, string fragmentPath, string geometryPath = null)
         {
             this.gl = gl;
 
@@ -22,8 +22,17 @@ namespace Common
             uint fragShader = MakeShader(fragmentCode, ShaderType.FragmentShader);
 
             ID = gl.CreateProgram();
+
+            if (geometryPath != null)
+            {
+                string geoCode = File.ReadAllText(geometryPath);
+                uint geoShader = MakeShader(geoCode, ShaderType.GeometryShader);
+                gl.AttachShader(ID, geoShader);
+            }
+
             gl.AttachShader(ID, vertShader);
             gl.AttachShader(ID, fragShader);
+
             gl.LinkProgram(ID);
 
             if (gl.GetProgram(ID, ProgramPropertyARB.LinkStatus) != 1)
