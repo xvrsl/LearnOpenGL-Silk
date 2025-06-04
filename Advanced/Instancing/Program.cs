@@ -13,68 +13,93 @@ using StbImageSharp;
 using Shader = Common.Shader;
 public static class Program
 {
-    static float[] quadVertices = {
-         // positions     // colors
-        -0.05f,  0.05f,  1.0f, 0.0f, 0.0f,
-        0.05f, -0.05f,  0.0f, 1.0f, 0.0f,
-        -0.05f, -0.05f,  0.0f, 0.0f, 1.0f,
-
-        -0.05f,  0.05f,  1.0f, 0.0f, 0.0f,
-        0.05f, -0.05f,  0.0f, 1.0f, 0.0f,
-        0.05f,  0.05f,  0.0f, 1.0f, 1.0f
-    };
-    static Shader quadShader;
     static Model planet, rock;
-    static uint vao;
-    static uint instanceVBO;
+    static Shader shader, shaderInstanced;
+    const int amount = 400000;
+    static Matrix4X4<float>[] matrices = new Matrix4X4<float>[amount];
+    static int Rand()
+    {
+        return Random.Shared.Next();
+    }
     private static unsafe void OnLoad(WindowContext context)
     {
+        shader = new Shader(gl, "resources/shader.vs", "resources/shader_unlit.fs");
+        shaderInstanced = new Shader(gl, "resources/shader_instanced.vs", "resources/shader_unlit.fs");
         planet = new Model(gl, @"resources\planet\planet.obj");
         rock = new Model(gl, @"resources\rock\rock.obj");
+        float radius = 150;
+        float offset = 25f;
 
-        Vector2[] offsets = new Vector2[100];
-        int index = 0;
-        float offset = 0.1f;
-        for (int y = -10; y < 10; y += 2)
+        uint buffer = gl.GenBuffer();
+        gl.BindBuffer(BufferTargetARB.ArrayBuffer, buffer);
+
+        for (uint i = 0; i < amount; i++)
         {
-            for (int x = -10; x < 10; x += 2)
-            {
-                offsets[index++] = new Vector2(x / 10f + offset, y / 10f + offset);
-            }
+            Matrix4X4<float> model = Matrix4X4<float>.Identity;
+            float angle = (float)i / (float)amount * 2 * float.Pi;
+            float displacement = (Rand() % (int)(2 * offset * 100)) / 100f - offset;
+            float x = MathF.Sin(angle) * radius + displacement;
+            displacement = (Rand() % (int)(2 * offset * 100)) / 100f - offset;
+            float y = displacement * 0.4f;
+            displacement = (Rand() % (int)(2 * offset * 100)) / 100f - offset;
+            float z = MathF.Cos(angle) * radius + displacement;
+
+            float scale = (Rand() % 20) / 100f + 0.05f;
+
+            float rotAngle = float.DegreesToRadians(Rand() % 360);
+            var axis = new Vector3(0.4f, 0.6f, 0.8f);
+            axis = axis / axis.Length();
+            model = model * Matrix4X4.CreateFromAxisAngle(new Vector3D<float>(axis.X, axis.Y, axis.Z), rotAngle);
+            model = model * Matrix4X4.CreateScale(scale);
+            model = model * Matrix4X4.CreateTranslation(x, y, z);
+
+            matrices[i] = model;
         }
-        instanceVBO = gl.GenBuffer();
-        gl.BindBuffer(BufferTargetARB.ArrayBuffer, instanceVBO);
-        gl.BufferData<Vector2>(BufferTargetARB.ArrayBuffer, offsets, BufferUsageARB.StaticDraw);
-        gl.BindBuffer(BufferTargetARB.ArrayBuffer, 0);
+        gl.BufferData<Matrix4X4<float>>(BufferTargetARB.ArrayBuffer, matrices, BufferUsageARB.StaticDraw);
 
-        vao = gl.GenVertexArray();
-        gl.BindVertexArray(vao);
-        uint vbo = gl.GenBuffer();
-        gl.BindBuffer(BufferTargetARB.ArrayBuffer, vbo);
-        gl.BufferData<float>(BufferTargetARB.ArrayBuffer, quadVertices, BufferUsageARB.StaticDraw);
-        gl.EnableVertexAttribArray(0);
-        gl.VertexAttribPointer(0, 2, VertexAttribPointerType.Float, false, 5 * sizeof(float), 0);
-        gl.EnableVertexAttribArray(1);
-        gl.VertexAttribPointer(1, 3, VertexAttribPointerType.Float, false, 5 * sizeof(float), 2 * sizeof(float));
-        gl.EnableVertexAttribArray(2);
-        gl.BindBuffer(BufferTargetARB.ArrayBuffer, instanceVBO);
-        gl.VertexAttribPointer(2, 2, GLEnum.Float, false, 2 * sizeof(float), 0);
-        gl.BindBuffer(BufferTargetARB.ArrayBuffer, 0);
-        gl.VertexAttribDivisor(2, 1);
+        for (int i = 0; i < rock.meshes.Count; i++)
+        {
+            uint vao = rock.meshes[i].VAO;
+            gl.BindVertexArray(vao);
 
-        gl.BindVertexArray(0);
-        gl.BindBuffer(BufferTargetARB.ArrayBuffer, 0);
+            var vec4Size = sizeof(Vector4D<float>);
+            gl.EnableVertexAttribArray(3);
+            gl.EnableVertexAttribArray(4);
+            gl.EnableVertexAttribArray(5);
+            gl.EnableVertexAttribArray(6);
 
-        quadShader = new Shader(gl, "resources/quadShader_vert.glsl", "resources/quadShader_frag.glsl");
+            gl.VertexAttribPointer(3, 4, VertexAttribPointerType.Float, false, (uint)(4 * vec4Size), 0);
+            gl.VertexAttribPointer(4, 4, VertexAttribPointerType.Float, false, (uint)(4 * vec4Size), 1 * vec4Size);
+            gl.VertexAttribPointer(5, 4, VertexAttribPointerType.Float, false, (uint)(4 * vec4Size), 2 * vec4Size);
+            gl.VertexAttribPointer(6, 4, VertexAttribPointerType.Float, false, (uint)(4 * vec4Size), 3 * vec4Size);
 
-    
+            gl.VertexAttribDivisor(3, 1);
+            gl.VertexAttribDivisor(4, 1);
+            gl.VertexAttribDivisor(5, 1);
+            gl.VertexAttribDivisor(6, 1);
 
+            gl.BindVertexArray(0);
+        }
     }
     private static unsafe void OnRender(WindowContext context, double deltaTime)
     {
-        quadShader.Use();
-        gl.BindVertexArray(vao);
-        gl.DrawArraysInstanced(PrimitiveType.Triangles, 0, 6, 100);
+        gl.Enable(EnableCap.DepthTest);
+
+        SetShaderContext(shader, Matrix4X4.CreateScale<float>(4));
+        planet.Draw(shader);
+
+        shaderInstanced.Use();
+        SetShaderContext(shaderInstanced, Matrix4X4<float>.Identity);
+        for (int i = 0; i < rock.meshes.Count; i++)
+        {
+            var mesh = rock.meshes[i];
+            gl.BindVertexArray(mesh.VAO);
+            var indicies = mesh.indicies;
+            gl.DrawElementsInstanced(GLEnum.Triangles,
+             (uint)indicies.Count,
+             DrawElementsType.UnsignedInt, null,
+             amount);
+        }
     }
 
     #region BASE
@@ -83,7 +108,8 @@ public static class Program
     static IInputContext input => context.input;
     static Common.Camera camera = new Common.Camera()
     {
-        position = new(0, 0, -3)
+        position = new(0, 0, -3),
+        farPlane = 1000f
     };
     static Matrix4X4<float> view => camera.GetViewMatrix();
     static Matrix4X4<float> projection => camera.GetProjectionMatrix(context.window.Size);

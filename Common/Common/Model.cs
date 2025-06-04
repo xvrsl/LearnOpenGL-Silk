@@ -12,7 +12,7 @@ public class Model
 {
     GL gl;
     Assimp assimp;
-    List<Mesh> meshes = new List<Mesh>();
+    public List<Mesh> meshes = new List<Mesh>();
     string directory;
 
     public void Draw(Common.Shader shader)

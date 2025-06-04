@@ -62,7 +62,7 @@ public class Mesh
         //Console.WriteLine($"Drawing indicies: v:{this.verticies.Count} i:{indicies.Count}");
         gl.BindVertexArray(0);
     }
-    uint VAO, VBO, EBO;
+    public uint VAO, VBO, EBO;
     unsafe void SetupMesh()
     {
         VAO = gl.GenVertexArray();
