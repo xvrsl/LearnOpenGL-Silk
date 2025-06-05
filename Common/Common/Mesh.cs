@@ -46,9 +46,9 @@ public class Mesh
             gl.ActiveTexture(GLEnum.Texture0 + i);
             string num = "";
             if (texture.type == "texture_diffuse")
-                num = $"{diffuseNr++}";
+                num = $"_{diffuseNr++}";
             if (texture.type == "texture_specular")
-                num = $"{specularNr++}";
+                num = $"_{specularNr++}";
 
             shader.SetInt("material." + texture.type + num, i);
             gl.BindTexture(GLEnum.Texture2D, texture.id);

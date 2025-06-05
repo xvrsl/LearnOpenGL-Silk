@@ -22,6 +22,6 @@ uniform float near;
 uniform float far;
 
 void main() {
-    FragColor = texture(material.texture_diffuse, TexCoords);
+    FragColor = texture(material.texture_diffuse_1, TexCoords);
     return;
 }

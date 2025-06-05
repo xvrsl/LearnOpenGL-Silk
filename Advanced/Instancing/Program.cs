@@ -15,7 +15,7 @@ public static class Program
 {
     static Model planet, rock;
     static Shader shader, shaderInstanced;
-    const int amount = 400000;
+    const int amount = 100000;
     static Matrix4X4<float>[] matrices = new Matrix4X4<float>[amount];
     static int Rand()
     {
@@ -28,7 +28,7 @@ public static class Program
         planet = new Model(gl, @"resources\planet\planet.obj");
         rock = new Model(gl, @"resources\rock\rock.obj");
         float radius = 150;
-        float offset = 25f;
+        float offset = 100f;
 
         uint buffer = gl.GenBuffer();
         gl.BindBuffer(BufferTargetARB.ArrayBuffer, buffer);
@@ -93,6 +93,8 @@ public static class Program
         for (int i = 0; i < rock.meshes.Count; i++)
         {
             var mesh = rock.meshes[i];
+            gl.ActiveTexture(GLEnum.Texture0);
+            gl.BindTexture(GLEnum.Texture2D, mesh.textures[0].id);
             gl.BindVertexArray(mesh.VAO);
             var indicies = mesh.indicies;
             gl.DrawElementsInstanced(GLEnum.Triangles,
