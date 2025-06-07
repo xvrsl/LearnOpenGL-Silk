@@ -25,13 +25,17 @@ public class WindowContext
     public event Action<WindowContext> onLoad;
     public event Action<WindowContext, double> onUpdate;
     public event Action<WindowContext, double> onRender;
+    public event Action<WindowContext, Vector2D<int>> onResize;
 
     public bool clearOnRender = true;
     public Color clearColor = Color.Black;
 
-    public WindowContext(string title, int width, int height)
+    public WindowContext(string title, int width, int height, int? multiSamples = null)
     {
-        WindowOptions winOptions = WindowOptions.Default;
+        WindowOptions winOptions = new WindowOptions(ViewOptions.Default)
+        {
+            Samples = multiSamples,
+        };
         winOptions.Size = new Silk.NET.Maths.Vector2D<int>(width, height);
         winOptions.Title = title;
         window = Window.Create(winOptions);
@@ -39,6 +43,12 @@ public class WindowContext
         window.Load += OnWindowLoad;
         window.Update += OnWindowUpdate;
         window.Render += OnWindowRender;
+        window.Resize += OnWindowResize;
+    }
+
+    private void OnWindowResize(Vector2D<int> d)
+    {
+        onResize?.Invoke(this,d);
     }
 
     public void Run()

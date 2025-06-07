@@ -21,8 +21,36 @@ public static class Program
     {
         return Random.Shared.Next();
     }
+    static uint? msaaBuffer;
+    static uint? screenTexture;
+    static uint screenVAO;
+
+    private static void OnResize(WindowContext context, Vector2D<int> d)
+    {
+        if (msaaBuffer != null)
+        {
+            gl.DeleteRenderbuffer(msaaBuffer.Value);
+        }
+        msaaBuffer = gl.GenRenderbuffer();
+        gl.BindRenderbuffer(RenderbufferTarget.Renderbuffer, msaaBuffer.Value);
+        gl.RenderbufferStorageMultisample(RenderbufferTarget.Renderbuffer, 4, InternalFormat.Depth24Stencil8, (uint)d.X, (uint)d.Y);
+        gl.BindRenderbuffer(RenderbufferTarget.Renderbuffer, 0);
+
+        if (screenTexture != null)
+        {
+            gl.DeleteTexture(screenTexture.Value);
+        }
+        screenTexture = gl.GenTexture();
+        gl.BindTexture(TextureTarget.Texture2D, screenTexture.Value);
+        gl.TextureStorage2D(screenTexture.Value, 0, SizedInternalFormat.Depth24Stencil8, (uint)d.X, (uint)d.Y);
+        gl.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.ColorAttachment0, TextureTarget.Texture2D, screenTexture.Value, 0);
+    }
+
     private static unsafe void OnLoad(WindowContext context)
     {
+        screenVAO = CreateScreenVAO();
+        OnResize(context, context.window.Size);
+
         shader = new Shader(gl, "resources/shader.vs", "resources/shader_unlit.fs");
         shaderInstanced = new Shader(gl, "resources/shader_instanced.vs", "resources/shader_unlit.fs");
         planet = new Model(gl, @"resources\planet\planet.obj");
@@ -81,8 +109,10 @@ public static class Program
             gl.BindVertexArray(0);
         }
     }
+
     private static unsafe void OnRender(WindowContext context, double deltaTime)
     {
+        gl.BindFramebuffer(FramebufferTarget.DrawFramebuffer, msaaBuffer.Value);
         gl.Enable(EnableCap.DepthTest);
 
         SetShaderContext(shader, Matrix4X4.CreateScale<float>(4));
@@ -102,8 +132,53 @@ public static class Program
              DrawElementsType.UnsignedInt, null,
              amount);
         }
+
+        var size = context.window.Size;
+        int width = size.X;
+        int height = size.Y;
+
+        gl.BindFramebuffer(FramebufferTarget.ReadFramebuffer, msaaBuffer.Value);
+        gl.BindFramebuffer(FramebufferTarget.DrawFramebuffer, 0);
+        gl.BlitFramebuffer(0, 0, width, height, 0, 0, width, height, ClearBufferMask.ColorBufferBit, BlitFramebufferFilter.Nearest);
+
+        gl.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
+        gl.ClearColor(1, 1, 1, 1);
+        gl.Clear(ClearBufferMask.ColorBufferBit);
+        gl.BindTexture(TextureTarget.Texture2D, screenTexture);
+        DrawPostProcessingQuad();
+    }
+    static uint CreateScreenVAO()
+    {
+        float[] ScreenVerts = {
+        -1,-1,0,    0,0,
+        1,-1,0,     1,0,
+        1,1,0,      1,1,
+        -1,1,0,     0,1
+        };
+        uint[] ScreenIndices ={
+        0,1,2,
+        0,2,3
+        };
+        uint screenVertBuffer = gl.GenBuffer();
+        uint screenVAO = gl.GenVertexArray();
+        gl.BindVertexArray(screenVAO);
+        gl.BindBuffer(BufferTargetARB.ArrayBuffer, screenVertBuffer);
+        gl.BufferData<float>(BufferTargetARB.ArrayBuffer, ScreenVerts, BufferUsageARB.StaticDraw);
+        gl.EnableVertexAttribArray(0);
+        gl.VertexAttribPointer(0, 3, GLEnum.Float, false, 5 * sizeof(float), 0);
+        gl.EnableVertexAttribArray(1);
+        gl.VertexAttribPointer(1, 2, GLEnum.Float, false, 5 * sizeof(float), 3 * sizeof(float));
+        uint screenElementBuffer = gl.GenBuffer();
+        gl.BindBuffer(BufferTargetARB.ElementArrayBuffer, screenElementBuffer);
+        gl.BufferData<uint>(BufferTargetARB.ElementArrayBuffer, ScreenIndices, BufferUsageARB.StaticDraw);
+        gl.BindVertexArray(0);
+        return screenVAO;
     }
 
+    static void DrawPostProcessingQuad()
+    {
+        
+    }
     #region BASE
     static WindowContext context;
     static GL gl => context.gl;
@@ -128,17 +203,23 @@ public static class Program
     static float mouseSensitivity = 0.5f;
     public static void Main()
     {
-        context = new WindowContext("Learn OpenGL", 800, 600,null);
+        context = new WindowContext("Learn OpenGL", 800, 600, null);
         context.clearColor = Color.DarkSlateBlue;
         context.onLoad += OnLoad;
         context.onRender += OnRender;
         context.onUpdate += OnUpdate;
-
+        context.onResize += OnResize;
         context.Run();
     }
+
+
     private static void OnUpdate(WindowContext context, double deltaTime)
     {
         UpdateCamera(deltaTime);
+        if (input.Keyboards[0].IsKeyPressed(Key.F1))
+        {
+            Console.WriteLine($"{context.window.Size.X} {context.window.Size.Y}");
+        }
     }
 
     private static void UpdateCamera(double deltaTime)
