@@ -14,7 +14,7 @@ using Shader = Common.Shader;
 public static class Program
 {
     static Model planet, rock;
-    static Shader shader, shaderInstanced;
+    static Shader shader, shaderInstanced, frameShader;
     const int amount = 100000;
     static Matrix4X4<float>[] matrices = new Matrix4X4<float>[amount];
     static int Rand()
@@ -25,32 +25,66 @@ public static class Program
     static uint? screenTexture;
     static uint screenVAO;
 
-    private static void OnResize(WindowContext context, Vector2D<int> d)
+    private static unsafe void OnResize(WindowContext context, Vector2D<int> d)
     {
+        uint width, height;
+        width = (uint)d.X;
+        height = (uint)d.Y;
+
         if (msaaBuffer != null)
         {
             gl.DeleteRenderbuffer(msaaBuffer.Value);
         }
-        msaaBuffer = gl.GenRenderbuffer();
-        gl.BindRenderbuffer(RenderbufferTarget.Renderbuffer, msaaBuffer.Value);
-        gl.RenderbufferStorageMultisample(RenderbufferTarget.Renderbuffer, 4, InternalFormat.Depth24Stencil8, (uint)d.X, (uint)d.Y);
-        gl.BindRenderbuffer(RenderbufferTarget.Renderbuffer, 0);
+        msaaBuffer = gl.GenFramebuffer();
+        gl.BindFramebuffer(FramebufferTarget.Framebuffer, msaaBuffer.Value);
+
 
         if (screenTexture != null)
         {
             gl.DeleteTexture(screenTexture.Value);
         }
         screenTexture = gl.GenTexture();
-        gl.BindTexture(TextureTarget.Texture2D, screenTexture.Value);
-        gl.TextureStorage2D(screenTexture.Value, 0, SizedInternalFormat.Depth24Stencil8, (uint)d.X, (uint)d.Y);
-        gl.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.ColorAttachment0, TextureTarget.Texture2D, screenTexture.Value, 0);
+        gl.BindTexture(TextureTarget.Texture2DMultisample, screenTexture.Value);
+        gl.TexImage2DMultisample(TextureTarget.Texture2DMultisample, 4, InternalFormat.Rgb, width, height,true);
+        gl.TexParameterI(TextureTarget.Texture2DMultisample, TextureParameterName.TextureMinFilter, (int)GLEnum.Linear);
+        gl.TexParameterI(TextureTarget.Texture2DMultisample, TextureParameterName.TextureMagFilter, (int)GLEnum.Linear);
+        gl.BindTexture(TextureTarget.Texture2DMultisample, 0);
+        gl.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.ColorAttachment0, TextureTarget.Texture2DMultisample, screenTexture.Value, 0);
+
+        uint rbo;
+        rbo = gl.GenRenderbuffer();
+        gl.BindRenderbuffer(RenderbufferTarget.Renderbuffer, rbo);
+        gl.RenderbufferStorageMultisample(RenderbufferTarget.Renderbuffer,4, InternalFormat.Depth24Stencil8, width, height);
+        gl.BindRenderbuffer(RenderbufferTarget.Renderbuffer, 0);
+        
+        gl.FramebufferRenderbuffer(FramebufferTarget.Framebuffer, FramebufferAttachment.DepthStencilAttachment, RenderbufferTarget.Renderbuffer, rbo);
+
+        if (gl.CheckFramebufferStatus(FramebufferTarget.Framebuffer) != GLEnum.FramebufferComplete)
+        {
+            Console.WriteLine("ERROR: Frame Buffer is not complete (2)");
+        }
+        else
+        {
+            Console.WriteLine("Depth-Stencil Render Buffer Attached");
+        }
+        gl.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
     }
 
     private static unsafe void OnLoad(WindowContext context)
     {
-        screenVAO = CreateScreenVAO();
         OnResize(context, context.window.Size);
+        PrepareRockAndPlanet();
+        PrepareScreenVAO();
+    }
 
+    static unsafe void PrepareScreenVAO()
+    {
+        screenVAO = CreateScreenVAO();
+        frameShader = new Shader(gl, "resources/FrameBufferShader.vs", "resources/FrameBufferShader.fs");
+
+    }
+    static unsafe void PrepareRockAndPlanet()
+    {
         shader = new Shader(gl, "resources/shader.vs", "resources/shader_unlit.fs");
         shaderInstanced = new Shader(gl, "resources/shader_instanced.vs", "resources/shader_unlit.fs");
         planet = new Model(gl, @"resources\planet\planet.obj");
@@ -108,13 +142,29 @@ public static class Program
 
             gl.BindVertexArray(0);
         }
-    }
 
+    }
     private static unsafe void OnRender(WindowContext context, double deltaTime)
     {
-        gl.BindFramebuffer(FramebufferTarget.DrawFramebuffer, msaaBuffer.Value);
-        gl.Enable(EnableCap.DepthTest);
+        var size = context.window.Size;
+        int width = size.X;
+        int height = size.Y;
+        gl.BindFramebuffer(FramebufferTarget.Framebuffer, msaaBuffer.Value);
+        gl.ClearColor(Color.Black);
+        gl.Clear(ClearBufferMask.ColorBufferBit);
+        gl.Clear(ClearBufferMask.DepthBufferBit);
+        gl.Clear(ClearBufferMask.StencilBufferBit);
+        DrawScene();
 
+        gl.BindFramebuffer(FramebufferTarget.ReadFramebuffer, msaaBuffer.Value);
+        gl.BindFramebuffer(FramebufferTarget.DrawFramebuffer, 0);
+        gl.BlitFramebuffer(0, 0, width, height, 0, 0, width, height, ClearBufferMask.ColorBufferBit, BlitFramebufferFilter.Nearest);
+        //DrawPostProcessingQuad();
+    }
+
+    static unsafe void DrawScene()
+    {
+        gl.Enable(EnableCap.DepthTest);
         SetShaderContext(shader, Matrix4X4.CreateScale<float>(4));
         planet.Draw(shader);
 
@@ -132,20 +182,6 @@ public static class Program
              DrawElementsType.UnsignedInt, null,
              amount);
         }
-
-        var size = context.window.Size;
-        int width = size.X;
-        int height = size.Y;
-
-        gl.BindFramebuffer(FramebufferTarget.ReadFramebuffer, msaaBuffer.Value);
-        gl.BindFramebuffer(FramebufferTarget.DrawFramebuffer, 0);
-        gl.BlitFramebuffer(0, 0, width, height, 0, 0, width, height, ClearBufferMask.ColorBufferBit, BlitFramebufferFilter.Nearest);
-
-        gl.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
-        gl.ClearColor(1, 1, 1, 1);
-        gl.Clear(ClearBufferMask.ColorBufferBit);
-        gl.BindTexture(TextureTarget.Texture2D, screenTexture);
-        DrawPostProcessingQuad();
     }
     static uint CreateScreenVAO()
     {
@@ -175,9 +211,11 @@ public static class Program
         return screenVAO;
     }
 
-    static void DrawPostProcessingQuad()
+    static unsafe void DrawPostProcessingQuad()
     {
-        
+        gl.BindTexture(TextureTarget.Texture2D, screenTexture.Value);
+        gl.BindVertexArray(screenVAO);
+        gl.DrawElements(PrimitiveType.Triangles, 6, DrawElementsType.UnsignedInt, null);
     }
     #region BASE
     static WindowContext context;
