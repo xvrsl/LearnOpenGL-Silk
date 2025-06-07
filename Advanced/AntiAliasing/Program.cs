@@ -24,7 +24,8 @@ public static class Program
     static uint? msaaBuffer;
     static uint? screenTexture;
     static uint screenVAO;
-
+    static uint intermediateFBO;
+    static uint intermediateTex;
     private static unsafe void OnResize(WindowContext context, Vector2D<int> d)
     {
         uint width, height;
@@ -45,7 +46,7 @@ public static class Program
         }
         screenTexture = gl.GenTexture();
         gl.BindTexture(TextureTarget.Texture2DMultisample, screenTexture.Value);
-        gl.TexImage2DMultisample(TextureTarget.Texture2DMultisample, 4, InternalFormat.Rgb, width, height,true);
+        gl.TexImage2DMultisample(TextureTarget.Texture2DMultisample, 4, InternalFormat.Rgb, width, height, true);
         gl.TexParameterI(TextureTarget.Texture2DMultisample, TextureParameterName.TextureMinFilter, (int)GLEnum.Linear);
         gl.TexParameterI(TextureTarget.Texture2DMultisample, TextureParameterName.TextureMagFilter, (int)GLEnum.Linear);
         gl.BindTexture(TextureTarget.Texture2DMultisample, 0);
@@ -54,9 +55,9 @@ public static class Program
         uint rbo;
         rbo = gl.GenRenderbuffer();
         gl.BindRenderbuffer(RenderbufferTarget.Renderbuffer, rbo);
-        gl.RenderbufferStorageMultisample(RenderbufferTarget.Renderbuffer,4, InternalFormat.Depth24Stencil8, width, height);
+        gl.RenderbufferStorageMultisample(RenderbufferTarget.Renderbuffer, 4, InternalFormat.Depth24Stencil8, width, height);
         gl.BindRenderbuffer(RenderbufferTarget.Renderbuffer, 0);
-        
+
         gl.FramebufferRenderbuffer(FramebufferTarget.Framebuffer, FramebufferAttachment.DepthStencilAttachment, RenderbufferTarget.Renderbuffer, rbo);
 
         if (gl.CheckFramebufferStatus(FramebufferTarget.Framebuffer) != GLEnum.FramebufferComplete)
@@ -68,6 +69,45 @@ public static class Program
             Console.WriteLine("Depth-Stencil Render Buffer Attached");
         }
         gl.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
+
+        intermediateFBO = CreateFBO(out intermediateTex);
+    }
+
+    private static unsafe uint CreateFBO(out uint fboTex)
+    {
+        uint width = (uint)context.window.Size.X;
+        uint height = (uint)context.window.Size.Y;
+
+        uint fbo = gl.GenFramebuffer();
+        gl.BindFramebuffer(FramebufferTarget.Framebuffer, fbo);
+
+        fboTex = gl.GenTexture();
+        gl.BindTexture(TextureTarget.Texture2D, fboTex);
+        gl.TexImage2D(TextureTarget.Texture2D, 0, InternalFormat.Rgb, width, height, 0, PixelFormat.Rgb, PixelType.Int, null);
+        gl.TexParameterI(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)GLEnum.Linear);
+        gl.TexParameterI(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)GLEnum.Linear);
+        gl.BindTexture(TextureTarget.Texture2D, 0);
+        gl.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.ColorAttachment0, TextureTarget.Texture2D, fboTex, 0);
+
+        uint rbo;
+        rbo = gl.GenRenderbuffer();
+        gl.BindRenderbuffer(RenderbufferTarget.Renderbuffer, rbo);
+        gl.RenderbufferStorage(RenderbufferTarget.Renderbuffer, InternalFormat.Depth24Stencil8, width, height);
+        gl.BindRenderbuffer(RenderbufferTarget.Renderbuffer, 0);
+
+        gl.FramebufferRenderbuffer(FramebufferTarget.Framebuffer, FramebufferAttachment.DepthStencilAttachment, RenderbufferTarget.Renderbuffer, rbo);
+
+        if (gl.CheckFramebufferStatus(FramebufferTarget.Framebuffer) != GLEnum.FramebufferComplete)
+        {
+            Console.WriteLine("ERROR: Frame Buffer is not complete (2)");
+        }
+        else
+        {
+            Console.WriteLine("Depth-Stencil Render Buffer Attached");
+        }
+        gl.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
+
+        return fbo;
     }
 
     private static unsafe void OnLoad(WindowContext context)
@@ -157,9 +197,15 @@ public static class Program
         DrawScene();
 
         gl.BindFramebuffer(FramebufferTarget.ReadFramebuffer, msaaBuffer.Value);
-        gl.BindFramebuffer(FramebufferTarget.DrawFramebuffer, 0);
+        gl.BindFramebuffer(FramebufferTarget.DrawFramebuffer, intermediateFBO);
         gl.BlitFramebuffer(0, 0, width, height, 0, 0, width, height, ClearBufferMask.ColorBufferBit, BlitFramebufferFilter.Nearest);
-        //DrawPostProcessingQuad();
+
+        gl.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
+        gl.ClearColor(Color.Magenta);
+        gl.Clear(ClearBufferMask.ColorBufferBit);
+        gl.Clear(ClearBufferMask.DepthBufferBit);
+        gl.Clear(ClearBufferMask.StencilBufferBit);
+        DrawPostProcessingQuad();
     }
 
     static unsafe void DrawScene()
@@ -213,7 +259,8 @@ public static class Program
 
     static unsafe void DrawPostProcessingQuad()
     {
-        gl.BindTexture(TextureTarget.Texture2D, screenTexture.Value);
+        frameShader.Use();
+        gl.BindTexture(TextureTarget.Texture2D, intermediateTex);
         gl.BindVertexArray(screenVAO);
         gl.DrawElements(PrimitiveType.Triangles, 6, DrawElementsType.UnsignedInt, null);
     }
